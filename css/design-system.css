@@ -1,0 +1,284 @@
+/* ============================================================
+   design-system.css — Drone Mapping · Presentación
+   Heredado verbatim del bloque <style> de presentacion-xpress/index.html
+   (líneas 36-119). Fuente validada 2026-05-26.
+   ============================================================ */
+
+  :root {
+    --lime: #7BC142;
+    --sky: #5AADE0;
+    --charcoal-900: #0F0F0F;
+    --charcoal-800: #1A1A1A;
+    --charcoal-700: #2A2A2A;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--charcoal-900);
+    color: rgba(255, 255, 255, 0.92);
+    font-family: 'Work Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-display   { font-family: 'Outfit', sans-serif; letter-spacing: -0.01em; }
+  .font-technical { font-family: 'Space Grotesk', monospace; letter-spacing: 0.18em; text-transform: uppercase; }
+
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  .glow-lime { text-shadow: 0 0 18px rgba(123, 193, 66, 0.55); }
+
+  .card-glass {
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 0.75rem;
+    box-shadow: 0 0.8rem 2rem rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .card-glass.lime { border-color: rgba(123,193,66,0.45); }
+  .border-l-lime { border-left: 3px solid var(--lime); }
+
+  .section {
+    min-height: 100vh;
+    padding: 6rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  @media (min-width: 768px) {
+    .section { padding: 6rem 4rem; }
+  }
+  /* Mobile: contenido natural · sin forzar 100vh · bg con opacidad reducida para que el zoom inevitable (ratio container portrait vs imagen 16:9) no se note tanto */
+  @media (max-width: 767px) {
+    .section { min-height: auto; padding: 3.5rem 1.25rem; }
+    .bg-fade-img img {
+      opacity: 0.28 !important;
+      object-position: center center;
+    }
+    .bg-fade-img .veil {
+      background: linear-gradient(180deg, rgba(15,15,15,0.45) 0%, rgba(15,15,15,0.78) 100%) !important;
+    }
+  }
+  .section-inner { max-width: 1280px; margin: 0 auto; width: 100%; position: relative; z-index: 2; }
+
+  .eyebrow { color: var(--lime); font-family: 'Space Grotesk', monospace; font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; }
+  .h1 { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: clamp(2.2rem, 6vw, 4.8rem); line-height: 1.05; letter-spacing: -0.02em; }
+  .h1.h1-tagline { font-size: clamp(1.35rem, 3.2vw, 2.1rem); font-weight: 600; }
+  .h2 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.1; letter-spacing: -0.015em; }
+  .h3 { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: clamp(1.2rem, 2vw, 1.6rem); line-height: 1.2; }
+  .lime { color: var(--lime); }
+  .sky  { color: var(--sky); }
+  .divider-lime { height: 3px; width: 60px; background: var(--lime); margin: 0.5rem 0 1.5rem; }
+
+  #scroll-progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+    background: linear-gradient(90deg, var(--lime), var(--sky));
+    z-index: 100; transition: width 0.1s linear;
+  }
+
+  /* SVG curvas de nivel decorativas · sutil */
+  .contour-bg {
+    position: absolute; inset: 0; opacity: 0.10; pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'><g fill='none' stroke='%237BC142' stroke-width='1'><path d='M0 100 Q200 80 400 110 T800 90'/><path d='M0 180 Q200 170 400 200 T800 175'/><path d='M0 260 Q200 250 400 280 T800 255'/><path d='M0 340 Q200 330 400 360 T800 335'/><path d='M0 420 Q200 410 400 440 T800 415'/><path d='M0 500 Q200 490 400 520 T800 495'/></g></svg>");
+    background-size: cover;
+  }
+
+  .bg-fade-img { position: absolute; inset: 0; z-index: 1; }
+  .bg-fade-img img { width: 100%; height: 100%; object-fit: cover; }
+  .bg-fade-img .veil { position: absolute; inset: 0; }
+
+/* ===== Pilar card uniforme (Samuel A7: misma tipografía/layout, rectángulos del mismo tamaño) ===== */
+.pillar-grid { display:grid; grid-template-columns:1fr; gap:1rem; }
+@media (min-width:768px){ .pillar-grid{ grid-template-columns:repeat(2,1fr); } }
+
+.rect-big {
+  background:linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border:1px solid rgba(255,255,255,0.10); border-left:3px solid var(--lime);
+  border-radius:0.75rem; padding:1.5rem 1.75rem; min-height:130px;
+}
+.rect-big .kw { font-family:'Space Grotesk',monospace; font-size:1.4rem; letter-spacing:0.04em; color:#fff; }
+.rect-big .desc { font-size:0.95rem; color:rgba(255,255,255,0.65); margin-top:0.4rem; }
+
+/* ===== rect-big highlight variant (Agente IA · lime-accented) ===== */
+.rect-big.highlight { border-left-color: var(--lime); background: linear-gradient(135deg, rgba(123,193,66,0.12), rgba(123,193,66,0.03)); }
+.rect-big.highlight .kw { color: var(--lime); }
+
+/* ===== Spec badge (credibilidad técnica) ===== */
+.spec-badge { display:inline-flex; align-items:center; gap:0.4rem; font-family:'Space Grotesk',monospace;
+  font-size:0.78rem; letter-spacing:0.06em; padding:0.35rem 0.7rem; border-radius:999px;
+  border:1px solid rgba(123,193,66,0.4); color:var(--lime); background:rgba(123,193,66,0.08); }
+
+/* ===== Rail "caminito" (hilo narrativo) ===== */
+#caminito { position:fixed; right:1.2rem; top:50%; transform:translateY(-50%); z-index:90;
+  display:flex; flex-direction:column; gap:0.6rem; }
+#caminito a { width:10px; height:10px; border-radius:999px; background:rgba(255,255,255,0.25);
+  transition:all .3s; position:relative; }
+#caminito a.active { background:var(--lime); box-shadow:0 0 12px rgba(123,193,66,0.7); transform:scale(1.3); }
+#caminito a span { position:absolute; right:18px; top:50%; transform:translateY(-50%); white-space:nowrap;
+  font-family:'Space Grotesk',monospace; font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase;
+  color:rgba(255,255,255,0.0); transition:color .3s; }
+#caminito a:hover span, #caminito a.active span { color:rgba(255,255,255,0.8); }
+@media (max-width:767px){ #caminito{ display:none; } }
+
+/* ===== Capa detalle (colapsable en HTML) ===== */
+[data-layer="detalle"] { margin-top:1.25rem; }
+[data-layer="detalle"].collapsed { display:none; }
+.ver-mas { display:inline-flex; align-items:center; gap:0.4rem; margin-top:1rem; cursor:pointer; position:relative;
+  font-family:'Space Grotesk',monospace; font-size:0.85rem; letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--lime); background:none; border:1px solid rgba(123,193,66,0.4); border-radius:999px; padding:0.5rem 1rem; }
+.ver-mas:hover { background:rgba(123,193,66,0.1); }
+
+/* ============================================================
+   Reveal escalonado por item · dirige el ORDEN DE LECTURA dentro de cada slide.
+   Generaliza el patrón de #cierre: reveal.js sigue agregando .in al .reveal;
+   el bloque queda estático y animan sus hijos (encabezado → cards izq→der).
+   ============================================================ */
+.reveal-seq.reveal { opacity:1; transform:none; }            /* el bloque NO hace fade; animan sus hijos */
+
+/* Cascada de hijos directos: eyebrow → h2 → subhead → divider → … */
+.reveal-seq > * { opacity:0; transform:translateY(16px);
+  transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+.reveal-seq.in > * { opacity:1; transform:none; }
+.reveal-seq.in > *:nth-child(1){ transition-delay:.04s }
+.reveal-seq.in > *:nth-child(2){ transition-delay:.12s }
+.reveal-seq.in > *:nth-child(3){ transition-delay:.20s }
+.reveal-seq.in > *:nth-child(4){ transition-delay:.28s }
+.reveal-seq.in > *:nth-child(5){ transition-delay:.36s }
+.reveal-seq.in > *:nth-child(6){ transition-delay:.44s }
+.reveal-seq.in > *:nth-child(7){ transition-delay:.52s }
+
+/* El wrapper de la capa resumen NO anima como bloque: deja que sus cards entren una por una */
+.reveal-seq > [data-layer="resumen"] { opacity:1 !important; transform:none !important; transition:none; }
+
+/* Cards del resumen: sub-secuencia izq→der según su posición entre hermanos (sin markup extra) */
+.reveal-seq [data-layer="resumen"] .rect-big,
+.reveal-seq [data-layer="resumen"] .card-glass,
+.reveal-seq [data-layer="resumen"] > p {
+  opacity:0; transform:translateY(14px);
+  transition:opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1),
+             box-shadow .25s ease, border-color .25s ease, background .25s ease;
+}
+.reveal-seq.in [data-layer="resumen"] .rect-big,
+.reveal-seq.in [data-layer="resumen"] .card-glass,
+.reveal-seq.in [data-layer="resumen"] > p { opacity:1; transform:none; transition-delay:.28s; }
+.reveal-seq.in [data-layer="resumen"] .rect-big:nth-child(2),
+.reveal-seq.in [data-layer="resumen"] .card-glass:nth-child(2) { transition-delay:.35s; }
+.reveal-seq.in [data-layer="resumen"] .rect-big:nth-child(3),
+.reveal-seq.in [data-layer="resumen"] .card-glass:nth-child(3) { transition-delay:.42s; }
+.reveal-seq.in [data-layer="resumen"] .rect-big:nth-child(4),
+.reveal-seq.in [data-layer="resumen"] .card-glass:nth-child(4) { transition-delay:.49s; }
+
+/* Divider que se traza: subraya el headline y libera la vista hacia el contenido */
+.reveal-seq .divider-lime { width:0; transition:width .8s cubic-bezier(.16,1,.3,1) .2s, opacity .6s ease .2s; }
+.reveal-seq.in .divider-lime { width:60px; }
+
+/* ============================================================
+   Hover highlight de cards · dirige la atención al elemento que el ojo explora
+   ============================================================ */
+.reveal-seq [data-layer="resumen"] .rect-big:hover,
+.reveal-seq [data-layer="resumen"] .card-glass:hover {
+  border-color:rgba(123,193,66,0.55); border-left-color:var(--lime);
+  box-shadow:0 12px 34px rgba(0,0,0,0.42), 0 0 0 1px rgba(123,193,66,0.30);
+  background:linear-gradient(135deg, rgba(123,193,66,0.09), rgba(255,255,255,0.02));
+}
+
+/* ============================================================
+   Hero · barrido de escaneo (motivo dron) que guía la mirada hacia el logo · una sola vez
+   ============================================================ */
+#hero .hero-scan { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+#hero .hero-scan i { position:absolute; left:0; right:0; top:0; height:160px;
+  background:linear-gradient(180deg, rgba(123,193,66,0) 0%, rgba(123,193,66,0.13) 50%, rgba(123,193,66,0) 100%);
+  filter:blur(2px); animation:heroScan 2.8s cubic-bezier(.4,0,.2,1) .25s 1 both; }
+@keyframes heroScan {
+  0%   { transform:translateY(-180px); opacity:0; }
+  15%  { opacity:1; }
+  90%  { opacity:0.5; }
+  100% { transform:translateY(115vh); opacity:0; }
+}
+/* el logo de portada entra con un leve escalado además del fade del reveal-seq */
+#hero .reveal-seq > img { transform:translateY(16px) scale(.97); }
+#hero .reveal-seq.in > img { transform:none; }
+
+/* ============================================================
+   Fondos · Ken Burns sutil al entrar cada sección (da vida · retiene la mirada)
+   ============================================================ */
+.bg-fade-img img { will-change:transform; transition:transform 7s cubic-bezier(.16,1,.3,1); }
+.section.sec-in .bg-fade-img img { transform:scale(1.06); }
+@media (max-width:767px) { .section.sec-in .bg-fade-img img { transform:none; } }  /* perf móvil */
+
+/* Cifras con count-up · resalta el dato de credibilidad (JS lo anima al entrar en vista) */
+.cnum { font-variant-numeric:tabular-nums; }
+
+/* ============================================================
+   Affordances de interacción con propósito
+   ============================================================ */
+.reveal-seq.in .ver-mas { animation:verMasPulse 2.8s ease-in-out 1s infinite; }
+@keyframes verMasPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(123,193,66,0.0); }
+  50%     { box-shadow:0 0 0 4px rgba(123,193,66,0.10); }
+}
+.demo-badge .da { display:inline-block; animation:demoBounce 1.8s ease-in-out infinite; }
+@keyframes demoBounce { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(3px); } }
+
+/* ============================================================
+   Hand-off entre secciones · la que sale por arriba cede el foco (dirige la lectura hacia abajo).
+   Reusa la transición de .reveal (0.9s) · el JS alterna .handoff al salir de vista.
+   ============================================================ */
+.section-inner.handoff { opacity:0.32; transform:translateY(-14px); }
+
+/* ============================================================
+   Chevron de scroll en el Hero · invita a empezar a leer hacia abajo
+   ============================================================ */
+.scroll-cue { position:absolute; left:50%; bottom:1.6rem; z-index:3;
+  width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+  border:1px solid rgba(123,193,66,0.45); border-radius:999px;
+  background:rgba(15,15,15,0.30); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  cursor:pointer; animation:cueBounce 2s ease-in-out infinite; transition:background .15s; }
+.scroll-cue:hover { background:rgba(123,193,66,0.18); }
+.scroll-cue::before { content:''; width:9px; height:9px;
+  border-right:2px solid var(--lime); border-bottom:2px solid var(--lime); transform:rotate(45deg) translateY(-2px); }
+@keyframes cueBounce { 0%,100%{ transform:translateX(-50%) translateY(0); } 50%{ transform:translateX(-50%) translateY(6px); } }
+/* el bounce mueve el eje X via keyframe → fijamos el centrado base */
+.scroll-cue { transform:translateX(-50%); }
+@media (max-width:767px){ .scroll-cue { bottom:1rem; } }
+
+/* ============================================================
+   "Qué recibes" · entregables concretos + formato (reduce fricción hacia el CTA · reversible)
+   ============================================================ */
+.entrega { margin:0 0 1.1rem; padding:1rem 1.15rem; border-radius:0.6rem;
+  background:rgba(123,193,66,0.05); border:1px solid rgba(123,193,66,0.22); border-left:3px solid var(--lime); }
+.entrega-label { font-family:'Space Grotesk',monospace; font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--lime); margin:0 0 0.55rem; }
+.entrega-list { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:0.32rem 1.25rem; }
+.entrega-list li { position:relative; padding-left:1rem; font-size:0.86rem; color:rgba(255,255,255,0.80); line-height:1.45; }
+.entrega-list li::before { content:'›'; position:absolute; left:0; color:var(--lime); }
+.entrega-list li b { color:rgba(255,255,255,0.95); font-weight:600; }
+.entrega-time { font-family:'Space Grotesk',monospace; font-size:0.74rem; color:rgba(255,255,255,0.55); margin:0.7rem 0 0; }
+.entrega-time b { color:var(--lime); font-weight:700; }
+
+/* ============================================================
+   Guardrails: reduced-motion + pdf-export (TODO visible, sin animación)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-seq > *,
+  .reveal-seq [data-layer="resumen"] .rect-big,
+  .reveal-seq [data-layer="resumen"] .card-glass,
+  .reveal-seq [data-layer="resumen"] > p { transition:none; opacity:1; transform:none; }
+  .reveal-seq .divider-lime { width:60px; transition:none; }
+  .reveal-seq.in .ver-mas, .demo-badge .da { animation:none; }
+  #hero .hero-scan i { animation:none; opacity:0; }
+  #hero .reveal-seq > img { transform:none; }
+  .bg-fade-img img, .section.sec-in .bg-fade-img img { transform:none; transition:none; }
+  .section-inner.handoff { opacity:1; transform:none; }
+  .scroll-cue { animation:none; }
+}
+body.pdf-export .reveal-seq > *,
+body.pdf-export .reveal-seq [data-layer="resumen"] .rect-big,
+body.pdf-export .reveal-seq [data-layer="resumen"] .card-glass,
+body.pdf-export .reveal-seq [data-layer="resumen"] > p { opacity:1 !important; transform:none !important; transition:none !important; }
+body.pdf-export .reveal-seq .divider-lime { width:60px !important; transition:none !important; }
+body.pdf-export .reveal-seq.in .ver-mas, body.pdf-export .demo-badge .da { animation:none !important; }
+body.pdf-export #hero .hero-scan { display:none !important; }
+body.pdf-export .bg-fade-img img, body.pdf-export .section.sec-in .bg-fade-img img { transform:none !important; transition:none !important; }
+body.pdf-export .section-inner.handoff { opacity:1 !important; transform:none !important; }
+body.pdf-export .scroll-cue { display:none !important; }

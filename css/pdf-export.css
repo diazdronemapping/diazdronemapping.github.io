@@ -1,0 +1,11 @@
+/* Overrides de capa para export a PDF (Modelo C) */
+
+/* En HTML normal: los CTA solo-PDF están ocultos */
+[data-pdf-cta] { display:none; }
+
+/* Modo export (body.pdf-export): oculta detalle, muestra CTAs PDF, neutraliza rail/scroll-progress */
+body.pdf-export [data-layer="detalle"] { display:none !important; }
+body.pdf-export .ver-mas { display:none !important; }
+body.pdf-export [data-pdf-cta] { display:flex !important; }
+body.pdf-export #caminito, body.pdf-export #scroll-progress { display:none !important; }
+body.pdf-export .section { min-height:auto; } /* páginas compactas para el PDF */

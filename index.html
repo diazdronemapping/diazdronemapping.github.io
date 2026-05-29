@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Drone Mapping · Presentación</title>
+<meta name="description" content="Topografía aérea RTK, deslinde notarial, BIM y promoción inmobiliaria." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Work+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { lime: { DEFAULT:'#7BC142', 700:'#5FA130', 300:'#A8D87A' }, sky:{ DEFAULT:'#5AADE0' },
+    charcoal:{ 900:'#0F0F0F', 800:'#1A1A1A', 700:'#2A2A2A', 600:'#3F3F3F' } },
+  fontFamily: { display:['Outfit','sans-serif'], body:['Work Sans','sans-serif'], technical:['Space Grotesk','monospace'] },
+}}}
+</script>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/pdf-export.css">
+<style>
+  /* Visor Potree + panel de mediciones a un lado (cards externas vía postMessage) */
+  .potree-row { display:flex; gap:0.6rem; align-items:stretch; }
+  .potree-cards {
+    flex:0 0 244px; width:244px;
+    display:flex; flex-direction:column; gap:0.5rem;
+    overflow-y:auto; max-height:min(65vw,520px);
+    font-family:'Space Grotesk',monospace;
+  }
+  .potree-cards:empty { display:none; }   /* sin cards → el visor ocupa todo el ancho */
+  .potree-cards::-webkit-scrollbar { width:5px; }
+  .potree-cards::-webkit-scrollbar-thumb { background:rgba(123,193,66,0.30); border-radius:3px; }
+  .ec-card {
+    flex-shrink:0; display:flex; flex-direction:column; gap:8px;
+    background:rgba(15,15,15,0.55);
+    border:1px solid rgba(123,193,66,0.30); border-radius:10px;
+    padding:11px 13px 12px; box-shadow:0 6px 22px rgba(0,0,0,0.30);
+    animation:ec-in 0.18s ease;
+  }
+  @keyframes ec-in { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .ec-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .ec-type { display:flex; align-items:center; gap:7px; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(123,193,66,0.92); }
+  .ec-dot { width:8px; height:8px; border-radius:50%; background:#7BC142; box-shadow:0 0 8px rgba(123,193,66,0.8); flex-shrink:0; }
+  .ec-close { background:transparent; border:0; color:rgba(255,255,255,0.5); font-size:15px; line-height:1; cursor:pointer; padding:2px 4px; border-radius:5px; transition:color 0.15s, background 0.15s; }
+  .ec-close:hover { color:#fff; background:rgba(255,255,255,0.1); }
+  .ec-primary { display:flex; align-items:baseline; gap:5px; }
+  .ec-primary .ec-val { font-size:24px; font-weight:600; color:#fff; line-height:1; }
+  .ec-primary .ec-unit { font-size:12px; color:rgba(123,193,66,0.85); letter-spacing:0.04em; }
+  .ec-rows { display:flex; flex-direction:column; gap:3px; }
+  .ec-row { display:flex; align-items:baseline; justify-content:space-between; gap:10px; font-size:11px; }
+  .ec-row .ec-k { color:rgba(255,255,255,0.52); letter-spacing:0.04em; white-space:nowrap; }
+  .ec-row .ec-v { color:rgba(255,255,255,0.92); text-align:right; }
+  .ec-row .ec-v b, .ec-seg .ec-v b { color:#fff; font-weight:600; }
+  .ec-segs { margin-top:1px; max-height:96px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.08); }
+  .ec-seg { display:flex; justify-content:space-between; gap:10px; font-size:10px; color:rgba(255,255,255,0.62); }
+  .ec-seg .ec-v { color:rgba(255,255,255,0.85); }
+  .ec-segs::-webkit-scrollbar { width:5px; }
+  .ec-segs::-webkit-scrollbar-thumb { background:rgba(123,193,66,0.35); border-radius:3px; }
+  @media (max-width:760px) {
+    .potree-row { flex-direction:column; }
+    .potree-cards { flex:none; width:auto; max-height:none; flex-direction:row; flex-wrap:wrap; }
+    .ec-card { flex:1 1 220px; }
+  }
+
+  /* Promoción · niveles con embed vivo (player TikTok + landing) */
+  .promo-levels-head { font-family:'Space Grotesk',monospace; font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.45); margin:1.6rem 0 0.5rem; }
+  .promo-level { display:flex; gap:1.5rem; align-items:center; max-width:880px; margin-top:0.75rem; padding:1.25rem; }
+  /* Video · player vertical oscuro (encaja con el deck) */
+  .promo-embed--video { flex:0 0 300px; display:flex; justify-content:center; align-items:flex-start; min-width:0; }
+  .tiktok-player { width:300px; max-width:100%; aspect-ratio:9/16; border-radius:0.6rem; overflow:hidden; border:1px solid rgba(255,255,255,0.10); background:#0F0F0F; }
+  .tiktok-player iframe { width:100%; height:100%; border:0; display:block; }
+  .promo-level--video .promo-copy { flex:1 1 0; }
+  /* Landing · full-width (patrón del 360°): copy arriba + iframe abajo.
+     El sitio Wix es un canvas fijo ~980px → se escala (JS) para verse completo sin recorte
+     y se recorta la nav superior para arrancar en el hero. */
+  .promo-level--landing { flex-direction:column; align-items:stretch; }
+  .promo-embed--landing { position:relative; width:100%; height:min(70vw,660px); overflow:hidden; border-radius:0.5rem; border:1px solid rgba(255,255,255,0.10); background:#0F0F0F; }
+  .promo-embed--landing iframe { position:absolute; top:0; left:0; border:0; background:#0F0F0F; transform-origin:top left; }
+  .promo-copy { display:flex; flex-direction:column; gap:0.5rem; min-width:0; }
+  .promo-copy--top { flex-direction:row; align-items:flex-end; justify-content:space-between; gap:0.75rem 1.5rem; flex-wrap:wrap; }
+  .promo-copy--top > div { display:flex; flex-direction:column; gap:0.4rem; max-width:620px; min-width:0; }
+  .promo-eyebrow { font-family:'Space Grotesk',monospace; font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--lime); margin:0; }
+  .promo-body { font-size:0.95rem; color:rgba(255,255,255,0.85); line-height:1.5; margin:0; }
+  .promo-cap { font-size:0.74rem; color:rgba(255,255,255,0.45); margin:0; }
+  .promo-link { display:inline-flex; align-items:center; gap:0.4rem; margin-top:0.2rem; padding:0.4rem 0.8rem; font-family:'Space Grotesk',monospace; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--lime); background:rgba(123,193,66,0.08); border:1px solid rgba(123,193,66,0.4); border-radius:999px; text-decoration:none; align-self:flex-start; transition:background 0.15s; white-space:nowrap; }
+  .promo-link:hover { background:rgba(123,193,66,0.16); }
+  @media (max-width:760px) {
+    .promo-level { flex-direction:column; align-items:stretch; gap:1rem; }
+    .promo-embed--video { flex:none; }
+    .tiktok-player { width:100%; max-width:320px; margin:0 auto; }
+    .promo-embed--landing { height:min(145vw,620px); }
+    .promo-copy--top { flex-direction:column; align-items:stretch; }
+    .promo-level--video .promo-copy { flex:none; }
+  }
+
+  /* ===== Cierre · contacto + secuencia de cierre formal ===== */
+  #cierre .section-inner { opacity:1; transform:none; }   /* el bloque siempre visible · animamos por item */
+  .cierre-seq > * { opacity:0; transform:translateY(18px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+  .cierre-seq.in > * { opacity:1; transform:none; }
+  .cierre-seq.in > *:nth-child(1){ transition-delay:.05s }
+  .cierre-seq.in > *:nth-child(2){ transition-delay:.16s }
+  .cierre-seq.in > *:nth-child(3){ transition-delay:.27s }
+  .cierre-seq.in > *:nth-child(4){ transition-delay:.38s }
+  .cierre-seq.in > *:nth-child(5){ transition-delay:.49s }
+  .cierre-seq.in > *:nth-child(6){ transition-delay:.62s }
+  .cierre-seq.in > *:nth-child(7){ transition-delay:.78s }
+  .cierre-seq.in > *:nth-child(8){ transition-delay:.92s }
+  .cierre-seq .divider-lime { width:0; transition:width .8s cubic-bezier(.16,1,.3,1) .38s, opacity .7s ease .38s; }
+  .cierre-seq.in .divider-lime { width:60px; }
+
+  .cierre-contact { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:1.5rem 2rem; margin-top:0.25rem; }
+  .cta-primary {
+    display:inline-flex; align-items:center; gap:0.6rem; padding:0.95rem 1.6rem;
+    font-family:'Space Grotesk',monospace; font-size:1rem; font-weight:700; letter-spacing:0.02em;
+    color:#0F0F0F; background:var(--lime); border:0; border-radius:999px; text-decoration:none; cursor:pointer;
+    animation:ctaGlow 2.6s ease-in-out infinite; transition:transform .2s ease;
+  }
+  .cta-primary:hover { transform:translateY(-2px); }
+  @keyframes ctaGlow {
+    0%,100% { box-shadow:0 6px 24px rgba(123,193,66,0.25), 0 0 0 0 rgba(123,193,66,0); }
+    50%     { box-shadow:0 6px 30px rgba(123,193,66,0.45), 0 0 0 6px rgba(123,193,66,0.06); }
+  }
+  .qr-card { display:flex; flex-direction:column; align-items:center; gap:0.4rem; background:#fff; padding:0.7rem 0.7rem 0.55rem; border-radius:0.7rem; text-decoration:none; border:1px solid rgba(123,193,66,0.45); box-shadow:0 8px 28px rgba(0,0,0,0.35); transition:transform .2s ease; }
+  .qr-card:hover { transform:translateY(-2px); }
+  .qr-card img { width:104px; height:104px; display:block; }
+  .qr-card span { font-family:'Space Grotesk',monospace; font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; color:#3F3F3F; }
+
+  .cierre-logos-wrap { display:flex; flex-direction:column; align-items:center; gap:0.6rem; margin-top:0.5rem; }
+  .cierre-logos-label { font-family:'Space Grotesk',monospace; font-size:0.66rem; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.40); margin:0; }
+  .cierre-logos { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:1.25rem 2rem; opacity:0.35; filter:grayscale(1); }
+  .cierre-logos img { height:30px; object-fit:contain; }
+
+  .cierre-wordmark { display:flex; flex-direction:column; align-items:center; gap:0.3rem; margin-top:0.75rem; }
+  .wm-name { font-family:'Outfit',sans-serif; font-weight:800; font-size:1.15rem; letter-spacing:0.28em; color:#fff; }
+  .wm-logo { height:clamp(54px,9vw,86px); width:auto; max-width:100%; object-fit:contain; filter:brightness(1.05) drop-shadow(0 6px 20px rgba(0,0,0,0.5)); }
+  .wm-tag { font-family:'Space Grotesk',monospace; font-size:0.7rem; letter-spacing:0.06em; color:var(--lime); opacity:0.85; }
+
+  @media (max-width:600px) {
+    .cierre-contact { gap:1.25rem; }
+    .cta-primary { font-size:0.92rem; padding:0.85rem 1.3rem; }
+    .wm-name { letter-spacing:0.2em; font-size:1rem; }
+    .wm-tag { font-size:0.6rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cierre-seq > * { transition:none; opacity:1; transform:none; }
+    .cta-primary { animation:none; }
+  }
+  /* PDF export: todo visible sin depender del scroll/animación */
+  body.pdf-export .cierre-seq > * { opacity:1 !important; transform:none !important; }
+  body.pdf-export .cierre-seq .divider-lime { width:60px !important; }
+  body.pdf-export .cta-primary { animation:none !important; }
+
+  /* Hero · portada: badges un poco más grandes para balance con el logo */
+  #hero .spec-badge { font-size:0.85rem; padding:0.5rem 1rem; letter-spacing:0.04em; }
+  @media (max-width:600px) { #hero .spec-badge { font-size:0.78rem; padding:0.42rem 0.8rem; } }
+</style>
+</head>
+<body>
+<div id="scroll-progress"></div>
+<!-- ============================================================
+     TASK 4 — Hero
+     ============================================================ -->
+<section id="hero" class="section" data-section data-rail="Inicio">
+  <!-- Fondo con imagen del dron escaneando terreno -->
+  <div class="bg-fade-img">
+    <img src="assets/img/hero-drone-scan.png" alt="Dron escaneando terreno en levantamiento RTK" loading="eager" />
+    <div class="veil" style="background:linear-gradient(160deg, rgba(15,15,15,0.55) 0%, rgba(15,15,15,0.82) 60%, rgba(15,15,15,0.95) 100%);"></div>
+  </div>
+  <div class="contour-bg"></div>
+  <div class="hero-scan"><i></i></div>
+  <div class="section-inner reveal reveal-seq" style="display:flex; flex-direction:column; align-items:flex-start; gap:1.9rem;">
+    <!-- Logo: protagonista · escala de portada -->
+    <img
+      src="assets/logo/logo-lockup.png"
+      alt="Drone Mapping MX"
+      style="height:clamp(96px,11vw,192px); width:auto; max-width:100%; filter:brightness(1.05) drop-shadow(0 8px 30px rgba(0,0,0,0.5)); object-fit:contain;"
+    />
+    <!-- Tagline: grande, digna de portada -->
+    <h1 class="h1 h1-tagline" style="max-width:880px; color:rgba(255,255,255,0.96); letter-spacing:-0.015em; line-height:1.12; font-size:clamp(2.1rem,5.6vw,4rem); font-weight:700;">
+      Transformamos terrenos en datos de precisión.
+    </h1>
+    <!-- Spec badges de credibilidad rápida -->
+    <div style="display:flex; flex-wrap:wrap; gap:0.7rem; margin-top:0.5rem;">
+      <span class="spec-badge">RTK · 1–2 cm</span>
+      <span class="spec-badge">BIM nativo</span>
+      <span class="spec-badge">+<span class="cnum" data-count="100">100</span> proyectos</span>
+    </div>
+  </div>
+  <!-- Pista de scroll · invita a empezar a leer hacia abajo -->
+  <a class="scroll-cue" href="#quienes-somos" aria-label="Desplázate para ver más"></a>
+</section>
+
+<!-- ============================================================
+     TASK 5 — Quiénes somos
+     ============================================================ -->
+<section id="quienes-somos" class="section" data-section data-rail="Quiénes">
+  <div class="contour-bg"></div>
+  <div class="section-inner reveal reveal-seq">
+    <p class="eyebrow">Quiénes somos</p>
+    <h2 class="h2" style="margin-top:0.5rem;">Empresa de mapeo aéreo <span class="lime">de precisión</span></h2>
+    <div class="divider-lime"></div>
+
+    <div data-layer="resumen">
+      <p style="max-width:680px; font-size:1.1rem; line-height:1.7; color:rgba(255,255,255,0.85); margin-bottom:1.75rem;">
+        Somos una empresa de mapeo aéreo consolidada. Usamos tecnología de precisión para llevar tu proyecto
+        del análisis al desarrollo — de principio a fin.
+      </p>
+      <!-- 3 chips card-glass -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; max-width:720px;">
+        <div class="card-glass lime" style="padding:1.25rem 1.5rem;">
+          <p style="font-family:'Space Grotesk',monospace; font-size:1.1rem; font-weight:700; color:var(--lime); letter-spacing:0.06em;">RTK</p>
+          <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin-top:0.35rem;">Precisión de 1–2 cm horizontal/vertical con dron y estación GNSS base.</p>
+        </div>
+        <div class="card-glass lime" style="padding:1.25rem 1.5rem;">
+          <p style="font-family:'Space Grotesk',monospace; font-size:1.1rem; font-weight:700; color:var(--lime); letter-spacing:0.06em;">BIM</p>
+          <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin-top:0.35rem;">Modelos Revit, AutoCAD y Civil 3D desde el vuelo hasta el expediente técnico.</p>
+        </div>
+        <div class="card-glass lime" style="padding:1.25rem 1.5rem;">
+          <p style="font-family:'Space Grotesk',monospace; font-size:1.1rem; font-weight:700; color:var(--lime); letter-spacing:0.06em;">Agente IA</p>
+          <p style="font-size:0.9rem; color:rgba(255,255,255,0.65); margin-top:0.35rem;">Captación y atención de clientes 24/7 para tu desarrollo inmobiliario.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF CTA (oculto en HTML, visible en body.pdf-export) -->
+    <a data-pdf-cta href="https://PRESENTACION_URL/#quienes-somos" class="ver-mas" aria-hidden="true">Ver más en la versión web →</a>
+  </div>
+</section>
+
+<!-- ============================================================
+     TASK 6 — Deslinde
+     ============================================================ -->
+<section id="deslinde" class="section" data-section data-rail="Deslinde">
+  <div class="bg-fade-img">
+    <img src="assets/img/caso-deslinde.png" alt="Plano de deslinde topográfico" loading="lazy" />
+    <div class="veil" style="background:linear-gradient(160deg, rgba(15,15,15,0.70) 0%, rgba(15,15,15,0.90) 100%);"></div>
+  </div>
+  <div class="contour-bg"></div>
+  <div class="section-inner reveal reveal-seq">
+    <p class="eyebrow">Servicio</p>
+    <h2 class="h2" style="margin-top:0.5rem;">Deslinde georreferenciado</h2>
+    <p style="font-size:1rem; color:rgba(255,255,255,0.65); margin:0.4rem 0 0; max-width:620px;">
+      El plano que firma tu perito, con coordenadas UTM bajo marco ITRF08.
+    </p>
+    <div class="divider-lime"></div>
+
+    <div data-layer="resumen">
+      <!-- Default 2-col grid: UTM+Marcación row 1, Trazo perimetral row 2 left — same card width as other sections (Samuel A7) -->
+      <div class="pillar-grid" style="max-width:860px;">
+        <div class="rect-big">
+          <p class="kw">UTM</p>
+          <p class="desc">Coordenadas georreferenciadas, marco ITRF08.</p>
+        </div>
+        <div class="rect-big">
+          <p class="kw">Marcación</p>
+          <p class="desc">Vértices materializados en campo con varilla y aerosol.</p>
+        </div>
+        <div class="rect-big">
+          <p class="kw">Trazo perimetral</p>
+          <p class="desc">Polígono cerrado con rumbos y distancias.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF CTA -->
+    <a data-pdf-cta href="https://PRESENTACION_URL/#deslinde" class="ver-mas" aria-hidden="true">Ver más en la versión web →</a>
+    <!-- Toggle detalle -->
+    <button class="ver-mas" data-target="#deslinde-detalle" data-label-open="Ver más ▾" data-label-close="Ocultar ▴">Ver más ▾</button>
+
+    <!-- Capa detalle -->
+    <div id="deslinde-detalle" data-layer="detalle">
+      <div class="entrega" style="max-width:860px;">
+        <p class="entrega-label">Qué recibes</p>
+        <ul class="entrega-list">
+          <li>Plano de deslinde en <b>PDF + DWG</b></li>
+          <li>Cuadro de rumbos con coordenadas <b>UTM (ITRF08)</b></li>
+          <li>Superficie total calculada en <b>m²</b></li>
+        </ul>
+        <p class="entrega-time">Entrega típica · <b>48–72 h</b> en proyectos estándar</p>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; max-width:860px; margin-top:0.5rem;">
+        <div>
+          <p style="font-family:'Space Grotesk',monospace; font-size:0.8rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--lime); margin-bottom:0.75rem;">Plano de deslinde</p>
+          <img src="assets/img/caso-deslinde.png" alt="Plano de deslinde ejemplo" style="width:100%; border-radius:0.5rem; border:1px solid rgba(255,255,255,0.10);" />
+        </div>
+        <div class="card-glass" style="padding:1.5rem;">
+          <p style="font-family:'Space Grotesk',monospace; font-size:0.8rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--lime); margin-bottom:1rem;">Cuadro de rumbos</p>
+          <p style="font-size:0.9rem; color:rgba(255,255,255,0.75); line-height:1.7;">
+            Cada vértice del polígono incluye:<br>
+            · Coordenada UTM Norte/Este<br>
+            · Rumbo y distancia al siguiente vértice<br>
+            · Superficie total calculada en m²<br>
+            · Sistema de referencia ITRF08, época 2010.0
+          </p>
+          <div style="margin-top:1.25rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <span class="spec-badge">ITRF08</span>
+            <span class="spec-badge">Zona 14Q</span>
+            <span class="spec-badge">PDF + DWG</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TASK 7 — Topografía
+     ============================================================ -->
+<section id="topografia" class="section" data-section data-rail="Topografía">
+  <div class="bg-fade-img">
+    <img src="assets/img/topografia-hero.png" alt="Levantamiento topográfico con dron RTK" loading="lazy" />
+    <div class="veil" style="background:linear-gradient(160deg, rgba(15,15,15,0.68) 0%, rgba(15,15,15,0.92) 100%);"></div>
+  </div>
+  <div class="contour-bg"></div>
+  <div class="section-inner reveal reveal-seq">
+    <p class="eyebrow">Servicio</p>
+    <h2 class="h2" style="margin-top:0.5rem;">Topografía aérea</h2>
+    <p style="font-size:1rem; color:rgba(255,255,255,0.65); margin:0.4rem 0 0; max-width:620px;">
+      1–2 cm de precisión H/V con dron RTK + estación GNSS.
+    </p>
+    <div class="divider-lime"></div>
+
+    <div data-layer="resumen">
+      <div class="pillar-grid" style="max-width:860px;">
+        <div class="rect-big">
+          <p class="kw">Ortomosaico</p>
+          <p class="desc">Imagen aérea georeferenciada de alta resolución (GeoTIFF).</p>
+        </div>
+        <div class="rect-big">
+          <p class="kw">Nube de puntos</p>
+          <p class="desc">Modelo denso LAS/LAZ con densidad de 100–500 pts/m².</p>
+        </div>
+        <div class="rect-big">
+          <p class="kw">Curvas de nivel</p>
+          <p class="desc">Isolíneas cada 25 cm o 50 cm, exportables a DXF/SHP.</p>
+        </div>
+        <div class="rect-big">
+          <p class="kw">DSM / Cortes</p>
+          <p class="desc">Modelo de superficie digital y perfiles de corte para cubicación.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF CTA -->
+    <a data-pdf-cta href="https://PRESENTACION_URL/#topografia" class="ver-mas" aria-hidden="true">Ver más en la versión web →</a>
+    <!-- Toggle detalle -->
+    <button class="ver-mas" data-target="#topografia-detalle" data-label-open="Ver más ▾" data-label-close="Ocultar ▴">Ver más ▾</button>
+
+    <!-- Capa detalle · Potree full-width (perfil topográfico se removió: usaremos entregables reales cuando estén) -->
+    <div id="topografia-detalle" data-layer="detalle">
+      <div class="entrega" style="max-width:1160px;">
+        <p class="entrega-label">Qué recibes</p>
+        <ul class="entrega-list">
+          <li>Ortomosaico en <b>GeoTIFF</b></li>
+          <li>Nube de puntos <b>LAS / LAZ</b></li>
+          <li>Curvas de nivel en <b>DXF / SHP</b></li>
+          <li>Modelos de superficie <b>DSM / DTM</b></li>
+        </ul>
+        <p class="entrega-time">Entrega típica · <b>48–72 h</b> en proyectos estándar</p>
+      </div>
+      <div class="card-glass" style="padding:1.25rem; max-width:1160px; margin-top:0.5rem; display:flex; flex-direction:column; gap:0.75rem;">
+        <p style="font-family:'Space Grotesk',monospace; font-size:0.8rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--lime); margin:0;">Nube de puntos interactiva · 17.2 M pts</p>
+        <!-- Visor + panel de mediciones a un lado. Las cards se emiten desde el iframe vía
+             postMessage (?cards=external) para no meter ruido visual sobre el modelo 3D. -->
+        <div class="potree-row">
+          <div id="potree-slot" style="flex:1 1 auto; min-width:0; border-radius:0.5rem; overflow:hidden; background:#0F0F0F;">
+            <iframe data-src="demos/potree-parcelas.html?cards=external"
+              title="Nube de puntos navegable · Potree"
+              loading="lazy" allowfullscreen
+              style="display:block; width:100%; height:min(65vw,520px); border:0; border-radius:0.5rem; background:#0F0F0F;"></iframe>
+          </div>
+          <div id="potree-cards" class="potree-cards" aria-live="polite"></div>
+        </div>
+        <!-- Instrucciones de navegación (afuera del iframe para no obstruir la vista) -->
+        <div style="display:flex; flex-wrap:wrap; gap:0.4rem 1.25rem; font-family:'Space Grotesk',monospace; font-size:0.74rem; letter-spacing:0.04em; color:rgba(255,255,255,0.6); padding-top:0.1rem;">
+          <span><b style="color:var(--lime); font-weight:600;">Arrastra</b> · pan</span>
+          <span><b style="color:var(--lime); font-weight:600;">Wheel</b> · zoom</span>
+          <span><b style="color:var(--lime); font-weight:600;">Click der + arrastra</b> · rotar</span>
+          <span><b style="color:var(--lime); font-weight:600;">Doble-click</b> · enfocar punto</span>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <span class="spec-badge">LAS / LAZ</span>
+          <span class="spec-badge">Potree viewer</span>
+          <span class="spec-badge">Medición · Trazo · Área</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TASK 8 — Promoción inmobiliaria
+     ============================================================ -->
+<section id="promocion" class="section" data-section data-rail="Promoción">
+  <div class="bg-fade-img">
+    <img src="assets/img/aerial-mix-bg.png" alt="Fotografía aérea inmobiliaria" loading="lazy" />
+    <div class="veil" style="background:linear-gradient(160deg, rgba(15,15,15,0.65) 0%, rgba(15,15,15,0.90) 100%);"></div>
+  </div>
+  <div class="contour-bg"></div>
+  <div class="section-inner reveal reveal-seq">
+    <p class="eyebrow">Servicio</p>
+    <h2 class="h2" style="margin-top:0.5rem;">Promoción inmobiliaria</h2>
+    <p style="font-size:1rem; color:rgba(255,255,255,0.65); margin:0.4rem 0 0; max-width:620px;">
+      Mostramos tu propiedad como merece: video cinematográfico, recorrido virtual y sitio web — todo listo para vender.
+    </p>
+    <div class="divider-lime"></div>
+
+    <div data-layer="resumen">
+      <div class="pillar-grid" style="max-width:860px;">
+        <div class="rect-big">
+          <p class="kw">Video aéreo</p>
+          <p class="desc">Filmación con Mavic 3 Classic 5.1K · edición · motion graphics.</p>
+        </div>
+        <div class="rect-big">
+          <p class="kw">Landing</p>
+          <p class="desc">Sitio web inmobiliario con ficha técnica, galería y formulario de contacto.</p>
+        </div>
+        <!-- Rect destacado: Recorrido 360° (demo en vivo en el detalle) -->
+        <div class="rect-big highlight">
+          <p class="kw">Recorrido 360°</p>
+          <p class="desc">Foto esferas interactivas que el comprador explora desde su celular.</p>
+          <div style="margin-top:0.6rem;">
+            <span class="spec-badge demo-badge">Demo en vivo <span class="da">↓</span></span>
+          </div>
+        </div>
+        <div class="rect-big">
+          <p class="kw">Agente IA</p>
+          <p class="desc">Atención y calificación de leads asistida, conectada a tu CRM.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF CTA -->
+    <a data-pdf-cta href="https://PRESENTACION_URL/#promocion" class="ver-mas" aria-hidden="true">Ver más en la versión web →</a>
+    <!-- Toggle detalle -->
+    <button class="ver-mas" data-target="#promocion-detalle" data-label-open="Ver más ▾" data-label-close="Ocultar ▴">Ver más ▾</button>
+
+    <!-- Capa detalle -->
+    <div id="promocion-detalle" data-layer="detalle">
+      <div class="entrega" style="max-width:880px;">
+        <p class="entrega-label">Qué recibes</p>
+        <ul class="entrega-list">
+          <li>Video editado en <b>MP4</b></li>
+          <li>Recorrido <b>360°</b> navegable</li>
+          <li>Landing con galería y formulario de contacto</li>
+        </ul>
+        <p class="entrega-time">Entrega <b>según el alcance</b> del material</p>
+      </div>
+      <!-- Recorrido virtual 360° · ejemplo real (Panoraven · lazy: carga al expandir) -->
+      <div class="card-glass" style="padding:1.25rem; max-width:880px; margin-top:0.5rem; display:flex; flex-direction:column; gap:0.75rem;">
+        <p style="font-family:'Space Grotesk',monospace; font-size:0.8rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--lime);">Recorrido virtual 360° · ejemplo real</p>
+        <div style="position:relative; width:100%; border-radius:0.5rem; overflow:hidden; border:1px solid rgba(255,255,255,0.10);">
+          <iframe
+            data-src="https://panoraven.com/es/embed/jhDwvsHRRI"
+            title="Recorrido virtual 360° · Drone Mapping"
+            loading="lazy"
+            allowfullscreen="true"
+            allow="accelerometer; magnetometer; gyroscope; xr-spatial-tracking"
+            style="display:block; width:100%; height:min(56vw,460px); border:0;"></iframe>
+        </div>
+        <p style="font-size:0.82rem; color:rgba(255,255,255,0.45);">Arrástralo para mirar en cualquier dirección · pantalla completa disponible.</p>
+      </div>
+      <!-- Otros dos niveles de proyección del inmueble (junto al 360° de arriba = 3 niveles) -->
+      <p class="promo-levels-head">Otras formas en que presentamos tu propiedad</p>
+
+      <!-- Nivel · Video inmobiliario · player oscuro de TikTok (limpio + muestra likes/comentarios/guardados) -->
+      <div class="card-glass promo-level promo-level--video">
+        <div class="promo-embed promo-embed--video">
+          <div class="tiktok-player">
+            <iframe data-src="https://www.tiktok.com/player/v1/7512630744393551112?description=1&music_info=1&rel=0"
+              title="Video inmobiliario · TikTok · Drone Mapping"
+              loading="lazy"
+              allow="encrypted-media; fullscreen; picture-in-picture"
+              allowfullscreen></iframe>
+          </div>
+        </div>
+        <div class="promo-copy">
+          <p class="promo-eyebrow">Video inmobiliario</p>
+          <p class="promo-body">Le damos a tu propiedad una pieza para redes que la gente ve completa y comparte. Mira el alcance por ti mismo.</p>
+          <p class="promo-cap">Caso real · terreno de 5 ha en Tulancingo</p>
+          <a class="promo-link" href="https://vt.tiktok.com/ZSx9wgt4W/" target="_blank" rel="noopener">Ver en TikTok ↗</a>
+        </div>
+      </div>
+
+      <!-- Nivel · Página web para tu propiedad · landing real navegable (iframe full-width) -->
+      <div class="card-glass promo-level promo-level--landing">
+        <div class="promo-copy promo-copy--top">
+          <div>
+            <p class="promo-eyebrow">Página web para tu propiedad</p>
+            <p class="promo-body">Una página propia para tu propiedad. Compartes un link y el comprador ve fotos, ubicación y precio, y te contacta desde ahí.</p>
+            <p class="promo-cap">Caso real · Fraccampestre, preventa en Agua Blanca</p>
+          </div>
+          <a class="promo-link" href="https://www.dronemapping.mx/fraccampestre" target="_blank" rel="noopener">Abrir landing ↗</a>
+        </div>
+        <div class="promo-embed promo-embed--landing">
+          <iframe id="landing-frame" data-src="https://www.dronemapping.mx/fraccampestre"
+            title="Landing inmobiliaria · Fraccampestre"
+            loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TASK 9 — Arquitectura y construcción · BIM
+     ============================================================ -->
+<section id="arquitectura" class="section" data-section data-rail="Arquitectura">
+  <div class="bg-fade-img">
+    <img src="assets/img/arquitectura-hero.png" alt="Arquitectura y construcción BIM" loading="lazy" />
+    <div class="veil" style="background:linear-gradient(160deg, rgba(15,15,15,0.70) 0%, rgba(15,15,15,0.92) 100%);"></div>
+  </div>
+  <div class="contour-bg"></div>
+  <div class="section-inner reveal reveal-seq">
+    <p class="eyebrow">Servicio</p>
+    <h2 class="h2" style="margin-top:0.5rem;">Arquitectura y construcción</h2>
+    <p style="font-size:1rem; color:rgba(255,255,255,0.65); margin:0.4rem 0 0; max-width:620px;">
+      Todo bajo metodología BIM.
+    </p>
+    <div class="divider-lime"></div>
+
+    <div data-layer="resumen">
+      <div class="pillar-grid" style="max-width:860px;">
+        <div class="rect-big">
+          <p class="kw">Scan-to-BIM</p>
+          <p class="desc">Del vuelo fotogramétrico al modelo digital de edificación o terreno.</p>
+        </div>
+        <div class="rect-big">
+          <p class="kw">Revit / AutoCAD</p>
+          <p class="desc">Entregables compatibles con flujos de diseño arquitectónico.</p>
+        </div>
+        <div class="rect-big">
+          <p class="kw">Civil 3D</p>
+          <p class="desc">Superficies, alineamientos, perfiles y volumetrías de obra civil.</p>
+        </div>
+        <div class="rect-big">
+          <p class="kw">IFC</p>
+          <p class="desc">Formato abierto para interoperabilidad con cualquier plataforma BIM.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF CTA -->
+    <a data-pdf-cta href="https://PRESENTACION_URL/#arquitectura" class="ver-mas" aria-hidden="true">Ver más en la versión web →</a>
+    <!-- Toggle detalle -->
+    <button class="ver-mas" data-target="#arquitectura-detalle" data-label-open="Ver más ▾" data-label-close="Ocultar ▴">Ver más ▾</button>
+
+    <!-- Capa detalle -->
+    <div id="arquitectura-detalle" data-layer="detalle">
+      <div class="entrega" style="max-width:880px;">
+        <p class="entrega-label">Qué recibes</p>
+        <ul class="entrega-list">
+          <li>Modelo BIM en <b>Revit (RVT)</b></li>
+          <li><b>IFC</b> para interoperabilidad</li>
+          <li>Planos en <b>DWG / DXF</b></li>
+        </ul>
+        <p class="entrega-time">Entrega <b>según el alcance</b> del modelo</p>
+      </div>
+      <div class="card-glass" style="padding:1.25rem; max-width:880px; margin-top:0.5rem; display:flex; flex-direction:column; gap:0.75rem;">
+        <p style="font-family:'Space Grotesk',monospace; font-size:0.8rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--lime);">Modelo BIM navegable</p>
+        <div id="bim-slot" style="min-height:200px; border-radius:0.5rem; background:rgba(255,255,255,0.03); border:1px dashed rgba(123,193,66,0.3); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem; text-align:center; gap:0.5rem;">
+          <p style="font-size:0.92rem; color:rgba(255,255,255,0.7); line-height:1.5; max-width:520px; margin:0;">
+            Modelo BIM navegable de la <strong style="color:rgba(255,255,255,0.92);">Cabaña San Pedro</strong> (proyecto Topo Tello / Samuel).
+          </p>
+          <p style="font-size:0.78rem; color:rgba(255,255,255,0.45); line-height:1.5; max-width:520px; margin:0;">
+            Esperando export del Revit a glTF · próximamente embebido aquí.
+          </p>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <span class="spec-badge">RVT</span>
+          <span class="spec-badge">IFC 4.0</span>
+          <span class="spec-badge">DWG / DXF</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TASK 10 — Lo que nos diferencia
+     ============================================================ -->
+<section id="por-que" class="section" data-section data-rail="Por qué">
+  <div class="contour-bg"></div>
+  <div class="section-inner reveal reveal-seq">
+    <p class="eyebrow">Diferenciadores</p>
+    <h2 class="h2" style="margin-top:0.5rem;">Lo que nos diferencia</h2>
+    <div class="divider-lime"></div>
+
+    <div data-layer="resumen">
+      <div style="display:grid; grid-template-columns:1fr; gap:1rem; max-width:960px;">
+        <!-- Row 1 -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem;">
+          <div class="card-glass" style="padding:1.5rem 1.75rem;">
+            <p style="font-family:'Space Grotesk',monospace; font-size:1.05rem; font-weight:700; color:#fff; letter-spacing:0.03em;">Entrega rápida</p>
+            <p style="font-size:0.9rem; color:rgba(255,255,255,0.60); margin-top:0.4rem; line-height:1.5;">Resultados en 48–72 h para proyectos estándar.</p>
+          </div>
+          <div class="card-glass" style="padding:1.5rem 1.75rem;">
+            <p style="font-family:'Space Grotesk',monospace; font-size:1.05rem; font-weight:700; color:#fff; letter-spacing:0.03em;">Precisión RTK</p>
+            <p style="font-size:0.9rem; color:rgba(255,255,255,0.60); margin-top:0.4rem; line-height:1.5;">1–2 cm horizontal/vertical. Comparable a estación total.</p>
+          </div>
+          <div class="card-glass" style="padding:1.5rem 1.75rem;">
+            <p style="font-family:'Space Grotesk',monospace; font-size:1.05rem; font-weight:700; color:#fff; letter-spacing:0.03em;">BIM nativo</p>
+            <p style="font-size:0.9rem; color:rgba(255,255,255,0.60); margin-top:0.4rem; line-height:1.5;">Del vuelo al modelo, sin re-dibujar ni perder precisión.</p>
+          </div>
+        </div>
+        <!-- Row 2 -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem;">
+          <div class="card-glass lime" style="padding:1.5rem 1.75rem;">
+            <p style="font-family:'Space Grotesk',monospace; font-size:1.05rem; font-weight:700; color:var(--lime); letter-spacing:0.03em;">Agente IA</p>
+            <p style="font-size:0.9rem; color:rgba(255,255,255,0.60); margin-top:0.4rem; line-height:1.5;">Captación y seguimiento de clientes 24/7 para inmobiliarias, conectado a tu CRM.</p>
+          </div>
+          <div class="card-glass" style="padding:1.5rem 1.75rem;">
+            <p style="font-family:'Space Grotesk',monospace; font-size:1.05rem; font-weight:700; color:#fff; letter-spacing:0.03em;">Terrenos difíciles</p>
+            <p style="font-size:0.9rem; color:rgba(255,255,255,0.60); margin-top:0.4rem; line-height:1.5;">Laderas, barrancas y áreas remotas sin problema de acceso.</p>
+          </div>
+          <div class="card-glass" style="padding:1.5rem 1.75rem;">
+            <p style="font-family:'Space Grotesk',monospace; font-size:1.05rem; font-weight:700; color:#fff; letter-spacing:0.03em;">Trato directo</p>
+            <p style="font-size:0.9rem; color:rgba(255,255,255,0.60); margin-top:0.4rem; line-height:1.5;">Hablas con quien vuela y entrega. Sin intermediarios.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TASK 11 — Cierre
+     ============================================================ -->
+<section id="cierre" class="section" data-section data-rail="Contacto">
+  <div class="bg-fade-img">
+    <img src="assets/img/drone-gnss.png" alt="Drone Mapping · cierre" loading="lazy" />
+    <div class="veil" style="background:linear-gradient(180deg, rgba(15,15,15,0.75) 0%, rgba(15,15,15,0.96) 100%);"></div>
+  </div>
+  <div class="contour-bg"></div>
+  <div class="section-inner reveal cierre-seq" style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:1.25rem;">
+    <p class="eyebrow">Hablemos</p>
+    <h2 class="h2">¿Hablamos de tu proyecto?</h2>
+
+    <!-- Social proof data point (Samuel A9) -->
+    <p style="font-size:1rem; color:rgba(255,255,255,0.55); font-family:'Space Grotesk',monospace; letter-spacing:0.06em;">
+      +<span class="cnum" data-count="100">100</span> proyectos · <span class="cnum" data-count="5">5</span> años de operación
+    </p>
+
+    <div class="divider-lime" style="margin:0 auto;"></div>
+
+    <!-- Agradecimiento -->
+    <p style="max-width:540px; font-size:1.05rem; line-height:1.7; color:rgba(255,255,255,0.80);">
+      Gracias por tomarte el tiempo de ver nuestra presentación. Nos encantaría llevar tu próximo proyecto al aire.
+    </p>
+
+    <!-- Contacto · un solo CTA + QR al sitio (sin nombres) -->
+    <div class="cierre-contact">
+      <a class="cta-primary" href="https://wa.me/527757602869" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 2.1.55 4.06 1.6 5.83L2 22l4.4-1.15a9.9 9.9 0 0 0 5.64 1.76h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 1.84c2.17 0 4.21.85 5.75 2.38a8.06 8.06 0 0 1 2.38 5.69c0 4.48-3.65 8.13-8.13 8.13-1.36 0-2.7-.34-3.87-.99l-.28-.16-2.61.68.7-2.54-.18-.29a8.07 8.07 0 0 1-1.24-4.3c0-4.48 3.65-8.13 8.13-8.13Zm-3.2 4.13c-.15 0-.4.06-.6.29-.21.23-.79.77-.79 1.88s.81 2.18.92 2.33c.11.15 1.59 2.43 3.86 3.41.54.23.96.37 1.29.48.54.17 1.03.15 1.42.09.43-.06 1.34-.55 1.53-1.08.19-.53.19-.98.13-1.08-.06-.09-.21-.15-.44-.26-.23-.11-1.34-.66-1.55-.74-.21-.08-.36-.11-.51.11-.15.23-.58.74-.71.89-.13.15-.26.17-.49.06-.23-.11-.96-.35-1.83-1.13-.68-.6-1.13-1.35-1.27-1.58-.13-.23-.01-.35.1-.47.1-.1.23-.26.34-.4.11-.13.15-.23.23-.38.08-.15.04-.29-.02-.4-.06-.11-.51-1.23-.7-1.69-.18-.44-.37-.38-.51-.39h-.44Z"/></svg>
+        Escríbenos por WhatsApp
+      </a>
+      <a class="qr-card" href="https://www.dronemapping.mx" target="_blank" rel="noopener" aria-label="Visita dronemapping.mx">
+        <img src="assets/qr-dronemapping.svg" alt="Código QR a dronemapping.mx" />
+        <span>Escanéame · dronemapping.mx</span>
+      </a>
+    </div>
+
+    <!-- Prueba social · clientes -->
+    <div class="cierre-logos-wrap">
+      <p class="cierre-logos-label">Han confiado en nosotros</p>
+      <div class="cierre-logos">
+        <img src="assets/logos/sct.png"      alt="SCT" />
+        <img src="assets/logos/navecsa.png"  alt="Navecsa" />
+        <img src="assets/logos/cayco.png"    alt="Cayco" />
+        <img src="assets/logos/arqsa.png"    alt="ARQSA" />
+        <img src="assets/logos/quo-si.png"   alt="Quo-si" />
+        <img src="assets/logos/cliente6.png" alt="" />
+      </div>
+    </div>
+
+    <!-- Firma de marca · logo real -->
+    <div class="cierre-wordmark">
+      <img class="wm-logo" src="assets/logo/IMG_0179.PNG" alt="Drone Mapping MX" />
+      <span class="wm-tag">Topografía aérea · Arquitectura · Promoción inmobiliaria</span>
+    </div>
+
+    <!-- PDF CTA -->
+    <a data-pdf-cta href="https://PRESENTACION_URL/#cierre" class="ver-mas" aria-hidden="true" style="margin-top:0.5rem; text-decoration:none;">Ver presentación completa →</a>
+  </div>
+</section>
+<script src="js/reveal.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/detalle.js"></script>
+<script>
+  // Cards de medición del Potree renderizadas JUNTO al iframe (no encima del 3D).
+  // El visor (?cards=external) emite los datos por postMessage; aquí los pintamos.
+  (function () {
+    const panel = document.getElementById('potree-cards');
+    const slot  = document.getElementById('potree-slot');
+    const iframe = slot ? slot.querySelector('iframe') : null;
+    if (!panel || !iframe) return;
+    const cards = new Map(); // id -> el
+
+    const rowsHTML = (rows) => (rows || []).map(([k, v]) =>
+      `<div class="ec-row"><span class="ec-k">${k}</span><span class="ec-v">${v}</span></div>`).join('');
+    const segsHTML = (segs) => (segs || []).map(([k, v]) =>
+      `<div class="ec-seg"><span>${k}</span><span class="ec-v">${v}</span></div>`).join('');
+
+    function build(id) {
+      const el = document.createElement('div');
+      el.className = 'ec-card';
+      el.innerHTML =
+        '<div class="ec-head"><div class="ec-type"><span class="ec-dot"></span><span class="ec-type-label"></span></div>' +
+        '<button class="ec-close" aria-label="Cerrar medición" title="Cerrar">✕</button></div>' +
+        '<div class="ec-primary"><span class="ec-val"></span><span class="ec-unit"></span></div>' +
+        '<div class="ec-rows"></div><div class="ec-segs" style="display:none"></div>';
+      el.querySelector('.ec-close').addEventListener('click', () => {
+        el.remove(); cards.delete(id);
+        if (iframe.contentWindow) iframe.contentWindow.postMessage({ source: 'potree-cards-cmd', action: 'close', id }, '*');
+      });
+      return el;
+    }
+    function render(id, data) {
+      let el = cards.get(id);
+      if (!el) { el = build(id); panel.appendChild(el); cards.set(id, el); }
+      el.querySelector('.ec-type-label').textContent = data.type;
+      el.querySelector('.ec-val').textContent = data.val;
+      el.querySelector('.ec-unit').textContent = data.unit;
+      el.querySelector('.ec-rows').innerHTML = rowsHTML(data.rows);
+      const seg = el.querySelector('.ec-segs');
+      if (data.segs && data.segs.length) { seg.innerHTML = segsHTML(data.segs); seg.style.display = 'flex'; }
+      else { seg.innerHTML = ''; seg.style.display = 'none'; }
+    }
+    window.addEventListener('message', (e) => {
+      const d = e.data;
+      if (!d || d.source !== 'potree-cards') return;
+      if (d.action === 'render') render(d.id, d.data);
+      else if (d.action === 'close') { const el = cards.get(d.id); if (el) { el.remove(); cards.delete(d.id); } }
+      else if (d.action === 'clear') { cards.forEach((el) => el.remove()); cards.clear(); }
+    });
+  })();
+
+  // Landing Fraccampestre: el sitio Wix es un canvas fijo (~980px). Lo escalamos para que
+  // se vea COMPLETO (no recortado a la derecha) y recortamos la nav superior para que el
+  // iframe arranque en el hero "Fraccionamiento Campestre" (sin el logo/nav que distrae).
+  (function () {
+    const LOGICAL_W = 980;   // ancho del canvas desktop de Wix
+    const CROP = 200;        // px lógicos a recortar arriba (nav ≈184) → arranca en el hero
+    const frame = document.getElementById('landing-frame');
+    if (!frame) return;
+    const box = frame.parentElement;
+    function fit() {
+      const w = box.clientWidth;
+      if (!w) return;                       // colapsado → no aplicar scale(0)
+      const s = w / LOGICAL_W;
+      frame.style.width = LOGICAL_W + 'px';
+      frame.style.height = Math.round(box.clientHeight / s + CROP + 1200) + 'px';
+      frame.style.transform = 'scale(' + s + ')';
+      frame.style.top = '-' + Math.round(CROP * s) + 'px';
+    }
+    new ResizeObserver(fit).observe(box);   // dispara al expandir/redimensionar
+    frame.addEventListener('load', fit);    // y cuando el sitio termina de cargar
+  })();
+
+  // Animaciones de entrada que retienen la atención: count-up de cifras clave + Ken Burns por sección.
+  (function () {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Ken Burns: marca la sección al entrar en vista (la imagen de fondo hace un zoom lento)
+    const secIO = new IntersectionObserver((es) => es.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('sec-in');
+    }), { threshold: 0.2 });
+    document.querySelectorAll('.section').forEach(s => secIO.observe(s));
+    // Count-up: la cifra sube de 0 a su valor cuando entra en pantalla (atención sobre el dato)
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const target = +el.dataset.count;
+      if (reduce || document.body.classList.contains('pdf-export')) { el.textContent = target; return; }
+      let done = false;
+      const io = new IntersectionObserver((es) => es.forEach(e => {
+        if (e.isIntersecting && !done) {
+          done = true;
+          const dur = 1100, t0 = performance.now();
+          (function tick(t) {
+            const p = Math.min(1, (t - t0) / dur);
+            el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+            if (p < 1) requestAnimationFrame(tick);
+          })(t0);
+        }
+      }), { threshold: 0.6 });
+      io.observe(el);
+    });
+
+    // Hand-off: la sección que sale por arriba cede el foco (se atenúa) → dirige la lectura hacia abajo
+    const hoIO = new IntersectionObserver((es) => es.forEach(e => {
+      const leavingUp = !e.isIntersecting && e.boundingClientRect.top < 0;
+      e.target.classList.toggle('handoff', leavingUp);
+    }), { threshold: [0, 0.12] });
+    document.querySelectorAll('.section .section-inner').forEach(el => hoIO.observe(el));
+  })();
+</script>
+</body>
+</html>
