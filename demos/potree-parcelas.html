@@ -1057,7 +1057,7 @@
       // los métodos de las instancias Vector3 (THREE no es global): clone/set/etc.
       function setupMapTouchNav(viewer, isMeasuring) {
         const el = viewer.renderer.domElement;
-        const MIN_R = 0.2, MAX_R = 6000;   // piso de zoom bajo · el near plane reducido evita el recorte
+        const MIN_R = 0.1, MAX_R = 6000;   // piso de zoom muy bajo · el near capado por radius evita el recorte
         let mode = 0, p = null;
         const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
         const mid  = (t) => ({ x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2 });
@@ -1076,7 +1076,7 @@
           if (mode === 1 && t.length === 1) {
             const dx = t[0].clientX - p.x, dy = t[0].clientY - p.y;
             p = { x:t[0].clientX, y:t[0].clientY };
-            const g = v.radius * 1.0;       // pan ∝ distancia · ~1:1 con el dedo (calmado · antes 1.6 se sentía rápido)
+            const g = v.radius * 1.6;       // pan ∝ distancia · velocidad de la nav "buena" (1.0 se sintió lento/limitado)
             v.pan(-(dx / W) * g, (dy / H) * g);   // el terreno sigue al dedo
             e.preventDefault();
           } else if (mode === 2 && t.length >= 2) {
@@ -1093,7 +1093,7 @@
             const side = toCam.clone().cross(Z);
             if (side.length() > 1e-6) {
               side.normalize();
-              const dPitch = ((m.y - p.m.y) / H) * 1.4;   // tilt más calmado (antes 2.2)
+              const dPitch = ((m.y - p.m.y) / H) * 2.2;   // tilt · velocidad de la nav "buena"
               const test = toCam.clone().applyAxisAngle(side, dPitch);
               if (test.z > 0.05 * test.length()) toCam.applyAxisAngle(side, dPitch);
             }
