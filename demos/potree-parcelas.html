@@ -599,7 +599,13 @@
         Object.defineProperty(camP, 'near', {
           configurable: true,
           get: function () { return _n; },
-          set: function (v) { _n = Math.max(0.02, v * 0.1); }
+          // near = min(near_potree*0.1, 40% del radius). El cap por radius GARANTIZA
+          // near < radius a cualquier zoom y aunque la nube esté a medio cargar por
+          // red (lowestSpacing grande) → nunca recorta la superficie que miras.
+          set: function (v) {
+            var r = (viewer.scene && viewer.scene.view && viewer.scene.view.radius) || v;
+            _n = Math.max(0.02, Math.min(v * 0.1, r * 0.4));
+          }
         });
       })(viewer.scene.cameraP);
 
