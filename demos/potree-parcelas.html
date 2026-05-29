@@ -676,14 +676,19 @@
             viewer.fitToScreen(0.4);
           }
 
-          // ── Esconder loading overlay cuando la nube ya se AFINÓ ──────────
-          // Antes se ocultaba al instante (primer nodo) → en la web el cliente
-          // veía la nube "agrupada" (LOD grueso) mientras seguían llegando nodos
-          // por la red. Ahora mantenemos el spinner —con contador de puntos en
-          // vivo— hasta que el detalle se estabiliza (plateau) o un timeout.
+          // ── Esconder loading overlay ─────────────────────────────────────
+          // MÓVIL (táctil): ocultar de INMEDIATO. El overlay tapa el canvas y
+          // BLOQUEA el tacto mientras está visible → si persiste durante toda la
+          // carga, el usuario no puede navegar/zoom (regresión detectada por Diego:
+          // en celular ya funcionaba bien). La nube se afina por detrás.
+          // ESCRITORIO (mouse): mantener el spinner —con contador de puntos en
+          // vivo— hasta que el detalle se estabiliza (plateau) o timeout, para no
+          // mostrar el estado "agrupado" a medio cargar.
           var overlay  = document.getElementById('loading-overlay');
           var loadText = document.getElementById('loading-text');
-          (function waitRefined() {
+          if (isTouch) {
+            if (overlay) overlay.classList.add('hidden');
+          } else (function waitRefined() {
             var lastPts = 0, stable = 0, t0 = Date.now();
             function countPts() {
               var pc = viewer.scene.pointclouds[0]; if (!pc) return 0;
