@@ -415,6 +415,13 @@
     /* Ocultar el branding label mientras hay cards visibles (evita solape bottom-left) */
     body.measure-open #overlay-label { opacity: 0; transition: opacity 0.2s; }
 
+    /* Modo controles externos (deck móvil): el padre renderiza los controles ARRIBA
+       del iframe → ocultamos los overlays in-viewer para no duplicar ni tapar el 3D. */
+    body.ctrl-external #measure-toolbar,
+    body.ctrl-external #color-toggle,
+    body.ctrl-external #density-control,
+    body.ctrl-external #elevation-legend { display: none !important; }
+
     /* ──────────────────────────────────────────────────────────────────
        Móvil (≤600px) · reacomodo de overlays para que NO se enciman.
        Cluster superior compacto: toolbar (solo íconos · 1 fila) arriba-izq +
@@ -561,17 +568,25 @@
       viewer.setPointBudget(4000000);
       viewer.setBackground('black');
 
-      // Controles según el dispositivo:
-      // · Escritorio (mouse) → earthControls = navegación tipo Google Earth
-      //   (panea natural en terreno · doble-click fija el pivote).
-      // · Táctil (móvil/tablet) → orbitControls. EarthControls NO responde al
-      //   tacto de un dedo: su drag aborta en `if (!this.pivot) return` y el pivot
-      //   solo lo setea un `mousedown` que el touch nunca dispara. OrbitControls
-      //   sí rota con 1 dedo + pinch-zoom (2) + pan (3). Sin esto, en celular la
-      //   nube no se manipula (el gesto, además, hacía scroll del deck).
+      // Controles:
+      // · Escritorio (mouse) → earthControls = navegación tipo Google Earth.
+      // · Táctil (móvil/tablet) → earthControls queda como base INACTIVA (su
+      //   update() es no-op en reposo y su drag aborta sin pivot), y un
+      //   controlador táctil PROPIO estilo mapa maneja el gesto: 1 dedo = mover
+      //   sobre el terreno · 2 dedos = pellizcar (zoom) + girar (yaw) + tilt
+      //   (pitch). Antes earthControls no respondía al tacto de 1 dedo (drag
+      //   aborta en `if(!this.pivot)return`, y el pivot solo lo setea `mousedown`
+      //   que el touch nunca dispara).
       var isTouch = window.matchMedia('(pointer: coarse)').matches;
-      viewer.setControls(isTouch ? viewer.orbitControls : viewer.earthControls);
+      var measuringActive = false;   // suspende la nav táctil mientras se mide
+      // ?controls=external → el padre (deck) renderiza los controles ARRIBA del
+      // iframe y los maneja por postMessage (en móvil, para no tapar el 3D).
+      var externalControls = new URLSearchParams(location.search).get('controls') === 'external';
+      if (externalControls) document.body.classList.add('ctrl-external');
+
+      viewer.setControls(viewer.earthControls);
       window._potreeViewer = viewer;
+      if (isTouch) setupMapTouchNav(viewer, function () { return measuringActive; });
 
       // ── Load cloud ───────────────────────────────────────────────────────
       Potree.loadPointCloud(
@@ -870,20 +885,23 @@
           viewer.scene.addEventListener('measurement_added',   (e) => { if (e.measurement) wireMeasure(e.measurement); });
           viewer.scene.addEventListener('measurement_removed', (e) => { if (e.measurement) closeCard(e.measurement); });
 
-          toolBtns.forEach(btn => btn.addEventListener('click', () => {
-            const tool = btn.dataset.tool;
-            if (tool === 'clear') {
-              viewer.scene.measurements.slice().forEach(m => viewer.scene.removeMeasurement(m));
-              toolBtns.forEach(b => b.classList.remove('active'));
-              closeAllCards();
-              return;
-            }
+          // Activación de herramienta (reusable: botones in-iframe + comandos externos del deck)
+          function clearMeasurements() {
+            viewer.scene.measurements.slice().forEach(m => viewer.scene.removeMeasurement(m));
             toolBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            closeAllCards();
+            measuringActive = false;   // reanuda la navegación táctil
+            if (externalControls) parent.postMessage({ source:'potree-state', action:'tool', value:null }, '*');
+          }
+          function activateTool(tool) {
+            if (tool === 'clear') { clearMeasurements(); return; }
+            toolBtns.forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+            measuringActive = true;    // mientras se mide, el gesto coloca puntos (no navega)
             const m = measuringTool.startInsertion(presets[tool]);
             wireMeasure(m);
             openCard(m);   // feedback en vivo: la card aparece y se actualiza al colocar puntos
-          }));
+          }
+          toolBtns.forEach(btn => btn.addEventListener('click', () => activateTool(btn.dataset.tool)));
 
           // ── Leyenda de elevación (solo visible en modo 'elevation') ─────
           const legend  = document.getElementById('elevation-legend');
@@ -891,7 +909,9 @@
           function updateElevationLegend(attr) {
             // Marca en el body para que el CSS móvil eleve las cards sobre la leyenda
             document.body.classList.toggle('elevation-on', attr === 'elevation');
-            if (attr === 'elevation') {
+            const isElev = attr === 'elevation';
+            let ticks = null;
+            if (isElev) {
               // Lee elevationRange real del material (Potree lo inicializa desde bbox.z)
               let lo = null, hi = null;
               try {
@@ -901,28 +921,31 @@
               if (lo == null || hi == null) { lo = 2159; hi = 2950; }   // fallback metadata.json
 
               const t = (frac) => Math.round(lo + (hi - lo) * frac);
+              ticks = [t(0), t(0.25), t(0.5), t(0.75), t(1)];
               // Bordes con sufijo 'm'; intermedios solo número (el header ya dice 'm s.n.m.')
-              teNodes[0].textContent = t(0)    + ' m';
-              teNodes[1].textContent = t(0.25);
-              teNodes[2].innerHTML   = '<b>' + t(0.5) + '</b>';
-              teNodes[3].textContent = t(0.75);
-              teNodes[4].textContent = t(1)    + ' m';
+              teNodes[0].textContent = ticks[0] + ' m';
+              teNodes[1].textContent = ticks[1];
+              teNodes[2].innerHTML   = '<b>' + ticks[2] + '</b>';
+              teNodes[3].textContent = ticks[3];
+              teNodes[4].textContent = ticks[4] + ' m';
               legend.classList.add('visible');
               legend.setAttribute('aria-hidden', 'false');
             } else {
               legend.classList.remove('visible');
               legend.setAttribute('aria-hidden', 'true');
             }
+            // En modo externo, el padre (deck) pinta la leyenda arriba del iframe
+            if (externalControls) parent.postMessage({ source:'potree-state', action:'legend', visible:isElev, ticks }, '*');
           }
 
-          // ── Wire color toggle (RGB ↔ Clasif ↔ Elevación) ────────────────
+          // ── Color (RGB ↔ Clasif ↔ Elevación) · reusable in-iframe + externo ──
           const colorBtns = document.querySelectorAll('#color-toggle button[data-color]');
-          colorBtns.forEach(btn => btn.addEventListener('click', () => {
-            colorBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            material.activeAttributeName = btn.dataset.color;
-            updateElevationLegend(btn.dataset.color);
-          }));
+          function applyColor(value) {
+            colorBtns.forEach(b => b.classList.toggle('active', b.dataset.color === value));
+            material.activeAttributeName = value;
+            updateElevationLegend(value);
+          }
+          colorBtns.forEach(btn => btn.addEventListener('click', () => applyColor(btn.dataset.color)));
           // Estado inicial (RGB por default · leyenda oculta)
           updateElevationLegend(material.activeAttributeName);
 
@@ -934,20 +957,105 @@
               ? (v / 1000000).toFixed(v % 1000000 === 0 ? 0 : 1) + ' M'
               : (v / 1000).toFixed(0) + ' K';
           }
-          dSlider.addEventListener('input', () => {
-            const v = parseInt(dSlider.value, 10);
+          function applyDensity(v) {
+            v = parseInt(v, 10);
+            if (!v) return;
             viewer.setPointBudget(v);
-            dValue.textContent = fmtBudget(v);
-          });
+            if (dValue)  dValue.textContent = fmtBudget(v);
+            if (dSlider) dSlider.value = v;
+          }
+          dSlider.addEventListener('input', () => applyDensity(dSlider.value));
           // Sync inicial: el slider ya marca 4M = lo que ya setteamos arriba
           dValue.textContent = fmtBudget(parseInt(dSlider.value, 10));
 
-          console.log('Potree cloud loaded · RGB default · earthControls · toolbar + density + help wired');
+          // ── Comandos del padre (modo ?controls=external · controles arriba del iframe) ──
+          if (externalControls) {
+            window.addEventListener('message', (e) => {
+              const d = e.data;
+              if (!d || d.source !== 'potree-ctrl') return;
+              if      (d.action === 'color')    applyColor(d.value);
+              else if (d.action === 'density')  applyDensity(d.value);
+              else if (d.action === 'tool')     activateTool(d.value);
+              else if (d.action === 'clear')    clearMeasurements();
+              else if (d.action === 'stoptool') { measuringActive = false; toolBtns.forEach(b => b.classList.remove('active')); }  // reanuda nav sin borrar
+            });
+          }
+
+          console.log('Potree cloud loaded · earthControls' + (isTouch ? ' + map-touch' : '') + (externalControls ? ' + external-controls' : ''));
         }
       );
 
       // No cargar sidebar de Potree (UI propia)
       viewer.loadGUI = function () {};
+
+      // ══ Controlador táctil estilo mapa (móvil) ════════════════════════════
+      // earthControls queda como base inactiva (no-op en reposo · su drag aborta
+      // sin pivot). Aquí manejamos el gesto directo sobre viewer.scene.view:
+      //   · 1 dedo  → desplazar sobre el terreno (view.pan, escalado por radius)
+      //   · 2 dedos → pellizcar = zoom · girar = yaw · arrastrar vertical = tilt
+      //               todo alrededor del punto que mira la cámara (getPivot).
+      // Permite acercarse MUCHO más (radius mín 0.8 m). Vectores construidos con
+      // los métodos de las instancias Vector3 (THREE no es global): clone/set/etc.
+      function setupMapTouchNav(viewer, isMeasuring) {
+        const el = viewer.renderer.domElement;
+        const MIN_R = 0.8, MAX_R = 6000;
+        let mode = 0, p = null;
+        const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+        const mid  = (t) => ({ x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2 });
+        const ang  = (t) => Math.atan2(t[1].clientY - t[0].clientY, t[1].clientX - t[0].clientX);
+
+        function start(e) {
+          if (isMeasuring()) return;       // dejar que el tap coloque puntos de medición
+          const t = e.touches;
+          if (t.length === 1) { mode = 1; p = { x:t[0].clientX, y:t[0].clientY }; e.preventDefault(); }
+          else if (t.length >= 2) { mode = 2; p = { d:dist(t), m:mid(t), a:ang(t) }; e.preventDefault(); }
+        }
+        function move(e) {
+          if (isMeasuring() || !mode) return;
+          const t = e.touches, v = viewer.scene.view;
+          const W = el.clientWidth || 1, H = el.clientHeight || 1;
+          if (mode === 1 && t.length === 1) {
+            const dx = t[0].clientX - p.x, dy = t[0].clientY - p.y;
+            p = { x:t[0].clientX, y:t[0].clientY };
+            const g = v.radius * 1.6;       // pan ∝ distancia → se siente consistente a cualquier zoom
+            v.pan(-(dx / W) * g, (dy / H) * g);   // el terreno sigue al dedo
+            e.preventDefault();
+          } else if (mode === 2 && t.length >= 2) {
+            const d = dist(t), m = mid(t), a = ang(t);
+            const pivot = v.getPivot();                 // punto que mira la cámara
+            const toCam = v.position.clone().sub(pivot);
+            const Z = v.position.clone().set(0, 0, 1);   // eje vertical mundo
+            // zoom: escala distancia cámara↔pivote
+            let len = toCam.length();
+            if (p.d > 0 && d > 0) len = Math.max(MIN_R, Math.min(MAX_R, len * (p.d / d)));
+            // girar (yaw): twist de los 2 dedos alrededor del eje vertical
+            toCam.applyAxisAngle(Z, -(a - p.a));
+            // tilt (pitch): arrastre vertical del punto medio · sin voltear bajo el horizonte
+            const side = toCam.clone().cross(Z);
+            if (side.length() > 1e-6) {
+              side.normalize();
+              const dPitch = ((m.y - p.m.y) / H) * 2.2;
+              const test = toCam.clone().applyAxisAngle(side, dPitch);
+              if (test.z > 0.05 * test.length()) toCam.applyAxisAngle(side, dPitch);
+            }
+            toCam.normalize().multiplyScalar(len);
+            v.position.copy(pivot.clone().add(toCam));
+            v.lookAt(pivot.x, pivot.y, pivot.z);          // recomputa yaw/pitch/radius coherentes
+            p = { d:d, m:m, a:a };
+            e.preventDefault();
+          }
+        }
+        function end(e) {
+          const t = e.touches;
+          if (t.length === 0) mode = 0;
+          else if (t.length === 1) { mode = 1; p = { x:t[0].clientX, y:t[0].clientY }; }
+          else { mode = 2; p = { d:dist(t), m:mid(t), a:ang(t) }; }
+        }
+        el.addEventListener('touchstart',  start, { passive:false });
+        el.addEventListener('touchmove',   move,  { passive:false });
+        el.addEventListener('touchend',    end,   { passive:false });
+        el.addEventListener('touchcancel', end,   { passive:false });
+      }
 
     });
   </script>
