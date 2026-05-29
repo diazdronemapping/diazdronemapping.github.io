@@ -29,13 +29,20 @@
       width: 100%; height: 100%;
       background: #0F0F0F;
       overflow: hidden;
+      /* En móvil: el gesto táctil debe ir a los controles de Potree (rotar/zoom/pan),
+         NO al scroll de la página ni del deck que embebe este iframe. */
+      touch-action: none;
+      overscroll-behavior: none;
     }
     #potree_render_area {
       width: 100%;
       height: 100%;
       position: absolute;
       top: 0; left: 0;
+      touch-action: none;
     }
+    /* El canvas que crea Potree dentro del render area también cede el gesto */
+    #potree_render_area canvas { touch-action: none; display: block; }
     /* Hide sidebar completely — clean iframe embed */
     #sidebar_root,
     #potree_sidebar_toggle,
@@ -128,6 +135,9 @@
       border-color: rgba(255,120,120,0.5);
       color: #fff;
     }
+    #measure-toolbar button { white-space: nowrap; }
+    #measure-toolbar .ti { margin-right: 5px; }       /* glifo */
+    #measure-toolbar .tl { /* etiqueta · se oculta en móvil */ }
 
     /* Selector de color (clasificación / elevación) */
     #color-toggle {
@@ -405,11 +415,53 @@
     /* Ocultar el branding label mientras hay cards visibles (evita solape bottom-left) */
     body.measure-open #overlay-label { opacity: 0; transition: opacity 0.2s; }
 
+    /* ──────────────────────────────────────────────────────────────────
+       Móvil (≤600px) · reacomodo de overlays para que NO se enciman.
+       Cluster superior compacto: toolbar (solo íconos · 1 fila) arriba-izq +
+       densidad arriba-der · selector de color en 2ª fila. Cluster inferior:
+       leyenda full-width abajo · cards de medición elevadas sobre la leyenda
+       cuando el modo elevación está activo.
+       ────────────────────────────────────────────────────────────────── */
     @media (max-width: 600px) {
-      #density-control { width: 180px; }
-      #elevation-legend { width: 230px; padding: 7px 10px 9px; }
+      /* Toolbar de medición · solo íconos · una sola fila · arriba-izquierda */
+      #measure-toolbar {
+        top: 10px; left: 10px; right: auto;
+        flex-wrap: nowrap;
+        gap: 5px;
+        max-width: calc(100% - 190px);   /* deja sitio a la densidad a la derecha */
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      #measure-toolbar::-webkit-scrollbar { display: none; }
+      #measure-toolbar button { padding: 7px 10px; }
+      #measure-toolbar .ti { margin-right: 0; font-size: 13px; }
+      #measure-toolbar .tl { display: none; }          /* icon-only en móvil */
+
+      /* Densidad · arriba-derecha · compacta */
+      #density-control {
+        top: 10px; right: 10px; left: auto;
+        width: 165px;
+        padding: 7px 10px;
+      }
+
+      /* Selector de color · 2ª fila · arriba-izquierda (no comparte fila con la toolbar) */
+      #color-toggle { top: 64px; right: auto; left: 10px; }
+
+      /* Leyenda de elevación · barra full-width abajo */
+      #elevation-legend {
+        left: 10px; right: 10px; bottom: 10px;
+        width: auto;
+        padding: 7px 12px 9px;
+      }
       #elevation-legend .labels span:not(.edge-left):not(.edge-right):not(.mid) { display: none; }
-      .mi-card { width: 200px; }
+
+      /* Cards de medición · abajo-izq · se elevan sobre la leyenda en modo elevación */
+      #measure-stack {
+        left: 10px; right: auto; bottom: 12px;
+        max-height: calc(100% - 150px);
+      }
+      body.elevation-on #measure-stack { bottom: 94px; }  /* sobre la leyenda full-width (≈72px alto) */
+      .mi-card { width: min(220px, calc(100vw - 20px)); }
     }
   </style>
 </head>
@@ -426,11 +478,11 @@
 
   <!-- Mini-toolbar de medición · habilita las herramientas reales de Potree -->
   <div id="measure-toolbar">
-    <button data-tool="distance" title="Medir distancia">↔ Distancia</button>
-    <button data-tool="area"     title="Medir área">▱ Área</button>
-    <button data-tool="height"   title="Medir altura">↕ Altura</button>
-    <button data-tool="point"    title="Marcar punto">· Punto</button>
-    <button data-tool="clear" class="clear" title="Borrar medidas">✕ Limpiar</button>
+    <button data-tool="distance" title="Medir distancia"><span class="ti">↔</span><span class="tl">Distancia</span></button>
+    <button data-tool="area"     title="Medir área"><span class="ti">▱</span><span class="tl">Área</span></button>
+    <button data-tool="height"   title="Medir altura"><span class="ti">↕</span><span class="tl">Altura</span></button>
+    <button data-tool="point"    title="Marcar punto"><span class="ti">·</span><span class="tl">Punto</span></button>
+    <button data-tool="clear" class="clear" title="Borrar medidas"><span class="ti">✕</span><span class="tl">Limpiar</span></button>
   </div>
 
   <!-- Selector de coloreado · 3 modos · RGB por default -->
@@ -509,10 +561,16 @@
       viewer.setPointBudget(4000000);
       viewer.setBackground('black');
 
-      // Earth controls = navegación tipo Google Earth (panea natural en terreno,
-      // doble-click setea el punto de interés como nuevo pivote → más amigable
-      // al acercarse a un área específica)
-      viewer.setControls(viewer.earthControls);
+      // Controles según el dispositivo:
+      // · Escritorio (mouse) → earthControls = navegación tipo Google Earth
+      //   (panea natural en terreno · doble-click fija el pivote).
+      // · Táctil (móvil/tablet) → orbitControls. EarthControls NO responde al
+      //   tacto de un dedo: su drag aborta en `if (!this.pivot) return` y el pivot
+      //   solo lo setea un `mousedown` que el touch nunca dispara. OrbitControls
+      //   sí rota con 1 dedo + pinch-zoom (2) + pan (3). Sin esto, en celular la
+      //   nube no se manipula (el gesto, además, hacía scroll del deck).
+      var isTouch = window.matchMedia('(pointer: coarse)').matches;
+      viewer.setControls(isTouch ? viewer.orbitControls : viewer.earthControls);
       window._potreeViewer = viewer;
 
       // ── Load cloud ───────────────────────────────────────────────────────
@@ -831,6 +889,8 @@
           const legend  = document.getElementById('elevation-legend');
           const teNodes = [0,1,2,3,4].map(i => document.getElementById('ele-t' + i));
           function updateElevationLegend(attr) {
+            // Marca en el body para que el CSS móvil eleve las cards sobre la leyenda
+            document.body.classList.toggle('elevation-on', attr === 'elevation');
             if (attr === 'elevation') {
               // Lee elevationRange real del material (Potree lo inicializa desde bbox.z)
               let lo = null, hi = null;
