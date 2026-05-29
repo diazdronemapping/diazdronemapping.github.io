@@ -848,6 +848,36 @@ tailwind.config = { theme: { extend: {
     });
   })();
 
+  // Preload del visor Potree (mejora el arranque sin tocar la data de nodos, que no
+  // puede precargarse con el iframe oculto): (1) registrar el service worker temprano
+  // → evita el "reload-once" del iframe en la 1ª visita; (2) al acercarse a Topografía,
+  // prefetch de la librería Potree + el índice de la nube (metadata/hierarchy) para que
+  // al abrir "Ver más" el streaming arranque de inmediato (lib/índice ya en caché).
+  (function () {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw-octree.js').catch(function () {});  // local: 404 inofensivo
+    }
+    const sec = document.getElementById('topografia');
+    if (!sec || !('IntersectionObserver' in window)) return;
+    const assets = [
+      '/assets/_potree/build/potree/potree.js',
+      '/assets/_potree/libs/other/BinaryHeap.js',
+      '/assets/_potree/libs/jquery/jquery-3.1.1.min.js',
+      '/assets/_potree/libs/proj4/proj4.js',
+      '/assets/_potree/libs/tween/tween.min.js',
+      '/assets/_potree/clouds/parcelas/metadata.json',
+      '/assets/_potree/clouds/parcelas/hierarchy.bin'
+    ];
+    let done = false;
+    const io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting && !done) {
+        done = true; io.disconnect();
+        assets.forEach((href) => { const l = document.createElement('link'); l.rel = 'prefetch'; l.href = href; document.head.appendChild(l); });
+      }
+    }), { rootMargin: '600px' });
+    io.observe(sec);
+  })();
+
   // Landing Fraccampestre: el sitio Wix es un canvas fijo (~980px). Lo escalamos para que
   // se vea COMPLETO (no recortado a la derecha) y recortamos la nav superior para que el
   // iframe arranque en el hero "Fraccionamiento Campestre" (sin el logo/nav que distrae).
