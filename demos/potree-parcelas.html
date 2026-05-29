@@ -599,12 +599,14 @@
         Object.defineProperty(camP, 'near', {
           configurable: true,
           get: function () { return _n; },
-          // near = min(near_potree*0.1, 40% del radius). El cap por radius GARANTIZA
-          // near < radius a cualquier zoom y aunque la nube esté a medio cargar por
-          // red (lowestSpacing grande) → nunca recorta la superficie que miras.
+          // QUIRÚRGICO: dejar el near de Potree TAL CUAL (no escalar) salvo cuando
+          // recortaría la superficie al acercarse. Solo lo bajamos si supera el 60%
+          // del radius (zoom muy cercano). Así el render/tamaño-de-punto/EDL en zoom
+          // normal queda idéntico al stock (no degrada la navegación general) y solo
+          // se interviene en zoom muy cercano para que no recorte.
           set: function (v) {
             var r = (viewer.scene && viewer.scene.view && viewer.scene.view.radius) || v;
-            _n = Math.max(0.02, Math.min(v * 0.1, r * 0.4));
+            _n = Math.max(0.02, Math.min(v, r * 0.6));
           }
         });
       })(viewer.scene.cameraP);
