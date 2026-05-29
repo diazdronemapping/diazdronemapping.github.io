@@ -586,6 +586,23 @@
 
       viewer.setControls(viewer.earthControls);
       window._potreeViewer = viewer;
+
+      // ── Acercarse MUCHO más: bajar el near plane ─────────────────────────
+      // Potree fija el near del camera = lowestSpacing*10 (ver Viewer.update). Eso
+      // deja el near MAYOR que el radius al hacer zoom → recorta la superficie que
+      // miras → tope duro de zoom + la nube "desaparece" al acercarse (se siente
+      // como que la navegación se limita). Lo bajamos 10× con un setter en
+      // cameraP.near (no tocamos la librería). Potree reescribe near cada frame con
+      // su valor fresco, así que no se acumula. Beneficia móvil y escritorio.
+      (function patchNearPlane(camP) {
+        var _n = camP.near;
+        Object.defineProperty(camP, 'near', {
+          configurable: true,
+          get: function () { return _n; },
+          set: function (v) { _n = Math.max(0.02, v * 0.1); }
+        });
+      })(viewer.scene.cameraP);
+
       if (isTouch) setupMapTouchNav(viewer, function () { return measuringActive; });
 
       // ── Load cloud ───────────────────────────────────────────────────────
@@ -1029,7 +1046,7 @@
       // los métodos de las instancias Vector3 (THREE no es global): clone/set/etc.
       function setupMapTouchNav(viewer, isMeasuring) {
         const el = viewer.renderer.domElement;
-        const MIN_R = 0.8, MAX_R = 6000;
+        const MIN_R = 0.2, MAX_R = 6000;   // piso de zoom bajo · el near plane reducido evita el recorte
         let mode = 0, p = null;
         const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
         const mid  = (t) => ({ x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2 });
