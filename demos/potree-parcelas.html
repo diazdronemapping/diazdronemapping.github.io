@@ -563,7 +563,10 @@
 
       viewer.setEDLEnabled(true);
       viewer.setEDLRadius(1.4);
-      viewer.setEDLStrength(0.9);
+      // EDL (eye-dome lighting) sombrea por diferencias de profundidad → oscurece
+      // la nube en ciertas perspectivas. Bajamos la intensidad para que se vea más
+      // brillosa/uniforme (antes 0.9 · muy marcado).
+      viewer.setEDLStrength(0.4);
       viewer.setFOV(60);
       viewer.setPointBudget(4000000);
       viewer.setBackground('black');
@@ -630,8 +633,8 @@
 
           // Brillo del coloreado RGB (Diego: la nube se veía algo oscura · 2026-05-28).
           // rgbGamma <1 levanta midtones (natural) · rgbBrightness suma un lift leve.
-          material.rgbGamma      = 0.85;
-          material.rgbBrightness = 0.05;
+          material.rgbGamma      = 0.80;
+          material.rgbBrightness = 0.12;
 
           viewer.scene.addPointCloud(pointcloud);
 
@@ -1073,7 +1076,7 @@
           if (mode === 1 && t.length === 1) {
             const dx = t[0].clientX - p.x, dy = t[0].clientY - p.y;
             p = { x:t[0].clientX, y:t[0].clientY };
-            const g = v.radius * 1.6;       // pan ∝ distancia → se siente consistente a cualquier zoom
+            const g = v.radius * 1.0;       // pan ∝ distancia · ~1:1 con el dedo (calmado · antes 1.6 se sentía rápido)
             v.pan(-(dx / W) * g, (dy / H) * g);   // el terreno sigue al dedo
             e.preventDefault();
           } else if (mode === 2 && t.length >= 2) {
@@ -1085,12 +1088,12 @@
             let len = toCam.length();
             if (p.d > 0 && d > 0) len = Math.max(MIN_R, Math.min(MAX_R, len * (p.d / d)));
             // girar (yaw): twist de los 2 dedos alrededor del eje vertical
-            toCam.applyAxisAngle(Z, -(a - p.a));
+            toCam.applyAxisAngle(Z, (a - p.a));   // signo: girar 2 dedos → la nube gira en el MISMO sentido
             // tilt (pitch): arrastre vertical del punto medio · sin voltear bajo el horizonte
             const side = toCam.clone().cross(Z);
             if (side.length() > 1e-6) {
               side.normalize();
-              const dPitch = ((m.y - p.m.y) / H) * 2.2;
+              const dPitch = ((m.y - p.m.y) / H) * 1.4;   // tilt más calmado (antes 2.2)
               const test = toCam.clone().applyAxisAngle(side, dPitch);
               if (test.z > 0.05 * test.length()) toCam.applyAxisAngle(side, dPitch);
             }
