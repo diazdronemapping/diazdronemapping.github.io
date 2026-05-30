@@ -763,11 +763,14 @@ tailwind.config = { theme: { extend: {
   (function () {
     var swReady = new Promise(function (resolve) {
       if (!('serviceWorker' in navigator) || location.protocol === 'file:') return resolve();
-      navigator.serviceWorker.register('/sw-octree.js').then(function () {
+      navigator.serviceWorker.register('/sw-octree.js').catch(function () {});
+      // Pollear hasta que el SW CONTROLE la página (más confiable que controllerchange).
+      var t0 = Date.now();
+      (function poll() {
         if (navigator.serviceWorker.controller) return resolve();
-        navigator.serviceWorker.addEventListener('controllerchange', function () { resolve(); });
-        setTimeout(resolve, 6000);   // fallback · no bloquear indefinidamente
-      }).catch(function () { resolve(); });
+        if (Date.now() - t0 > 8000) return resolve();   // fallback · no bloquear indefinidamente
+        setTimeout(poll, 200);
+      })();
     });
     var slot = document.getElementById('potree-slot');
     var iframe = slot && slot.querySelector('iframe');
