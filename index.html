@@ -427,7 +427,7 @@ tailwind.config = { theme: { extend: {
              postMessage (?cards=external) para no meter ruido visual sobre el modelo 3D. -->
         <div class="potree-row">
           <div id="potree-slot" style="flex:1 1 auto; min-width:0; border-radius:0.5rem; overflow:hidden; background:#0F0F0F;">
-            <iframe data-swsrc="demos/potree-parcelas.html?cards=external"
+            <iframe data-src="demos/potree-parcelas.html?cards=external"
               title="Nube de puntos navegable · Potree"
               loading="lazy" allowfullscreen
               style="display:block; width:100%; height:min(65vw,520px); border:0; border-radius:0.5rem; background:#0F0F0F;"></iframe>
@@ -754,34 +754,24 @@ tailwind.config = { theme: { extend: {
 <script src="js/nav.js"></script>
 <script src="js/detalle.js"></script>
 <script>
-  // ── Visor Potree · carga del iframe GATED por el service worker ──────────
-  // La nube grande se sirve vía SW (chunks). Si el iframe carga ANTES de que el
-  // SW controle la página, octree.bin da 404 → NUBE NEGRA (bug intermitente que
-  // reportó Diego). Solución confiable: registrar el SW temprano y cargar el
-  // iframe SOLO cuando el SW ya controla (clients.claim) → el iframe nace
+  // ── Visor Potree · asegurar control del service worker (evita NUBE NEGRA) ──
+  // La nube se sirve vía SW (chunks). En la 1ª visita el SW recién se instala y la
+  // página NO queda controlada hasta RECARGAR (clients.claim no basta) → si el
+  // iframe carga sin SW, octree.bin da 404 → nube negra (bug intermitente de Diego).
+  // Igual que el visor standalone (que funciona siempre): recargamos el DECK una
+  // vez para tomar control; tras la recarga el iframe (lazy-load normal) nace
   // controlado → octree siempre resuelve.
   (function () {
-    var swReady = new Promise(function (resolve) {
-      if (!('serviceWorker' in navigator) || location.protocol === 'file:') return resolve();
-      navigator.serviceWorker.register('/sw-octree.js').catch(function () {});
-      // Pollear hasta que el SW CONTROLE la página (más confiable que controllerchange).
-      var t0 = Date.now();
-      (function poll() {
-        if (navigator.serviceWorker.controller) return resolve();
-        if (Date.now() - t0 > 8000) return resolve();   // fallback · no bloquear indefinidamente
-        setTimeout(poll, 200);
-      })();
-    });
-    var slot = document.getElementById('potree-slot');
-    var iframe = slot && slot.querySelector('iframe');
-    if (!iframe) return;
-    var loaded = false;
-    function loadPotree() {
-      if (loaded) return; loaded = true;
-      swReady.then(function () { if (!iframe.src) iframe.src = iframe.getAttribute('data-swsrc'); });
-    }
-    var btn = document.querySelector('button.ver-mas[data-target="#topografia-detalle"]');
-    if (btn) btn.addEventListener('click', loadPotree);   // 1ª expansión = carga (gated)
+    if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+    navigator.serviceWorker.register('/sw-octree.js').then(function () {
+      return navigator.serviceWorker.ready;
+    }).then(function () {
+      var n = parseInt(sessionStorage.getItem('swParentReloads') || '0', 10);
+      if (!navigator.serviceWorker.controller && n < 2) {
+        sessionStorage.setItem('swParentReloads', String(n + 1));
+        location.reload();
+      }
+    }).catch(function () {});
   })();
 
   // Cards de medición del Potree renderizadas JUNTO al iframe (no encima del 3D).
@@ -841,8 +831,8 @@ tailwind.config = { theme: { extend: {
     if (!bar || !iframe) return;
     if (!matchMedia('(max-width:760px)').matches) return;   // escritorio → overlays in-iframe
     // Cargar el visor en modo controles externos (antes del lazy-load)
-    if (iframe.dataset.swsrc && iframe.dataset.swsrc.indexOf('controls=') === -1)
-      iframe.dataset.swsrc += '&controls=external';
+    if (iframe.dataset.src && iframe.dataset.src.indexOf('controls=') === -1)
+      iframe.dataset.src += '&controls=external';
     const send = (msg) => { if (iframe.contentWindow) iframe.contentWindow.postMessage(Object.assign({ source:'potree-ctrl' }, msg), '*'); };
 
     // Color
