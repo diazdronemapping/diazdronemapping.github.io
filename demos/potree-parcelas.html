@@ -8,8 +8,9 @@
   navigator.serviceWorker.register('/sw-octree.js').then(function(){
     return navigator.serviceWorker.ready;
   }).then(function(){
-    if (!navigator.serviceWorker.controller && !sessionStorage.getItem('swOctreeReloaded')){
-      sessionStorage.setItem('swOctreeReloaded','1');
+    var _r = parseInt(sessionStorage.getItem('swOctreeReloads')||'0',10);
+    if (!navigator.serviceWorker.controller && _r < 4){
+      sessionStorage.setItem('swOctreeReloads', String(_r+1));
       location.reload();
     }
   }).catch(function(e){ console.warn('SW octree register failed', e); });
