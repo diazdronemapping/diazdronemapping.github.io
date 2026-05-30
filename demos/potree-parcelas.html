@@ -705,38 +705,27 @@
           }
 
           // ── Esconder loading overlay ─────────────────────────────────────
-          // MÓVIL (táctil): ocultar de INMEDIATO. El overlay tapa el canvas y
-          // BLOQUEA el tacto mientras está visible → si persiste durante toda la
-          // carga, el usuario no puede navegar/zoom (regresión detectada por Diego:
-          // en celular ya funcionaba bien). La nube se afina por detrás.
-          // ESCRITORIO (mouse): mantener el spinner —con contador de puntos en
-          // vivo— hasta que el detalle se estabiliza (plateau) o timeout, para no
-          // mostrar el estado "agrupado" a medio cargar.
+          // Ocultar en cuanto la nube empieza a renderizar (primer nodo) o tras un
+          // timeout CORTO. Antes (escritorio) se esperaba al "plateau" o 40 s → si
+          // la nube tardaba o fallaba, el cliente veía PANTALLA NEGRA larga con el
+          // spinner encima (bug reportado por Diego). Mostrar la nube en cuanto
+          // llega es mejor que un overlay negro prolongado.
           var overlay  = document.getElementById('loading-overlay');
           var loadText = document.getElementById('loading-text');
           if (isTouch) {
             if (overlay) overlay.classList.add('hidden');
-          } else (function waitRefined() {
-            var lastPts = 0, stable = 0, t0 = Date.now();
-            function countPts() {
+          } else (function hideWhenLoading() {
+            var t0 = Date.now();
+            function pts() {
               var pc = viewer.scene.pointclouds[0]; if (!pc) return 0;
               var s = 0, vn = pc.visibleNodes || [];
               for (var i = 0; i < vn.length; i++) { var n = vn[i]; s += (n.getNumPoints ? n.getNumPoints() : (n.numPoints || 0)); }
               return s;
             }
-            var fmtM = function (n) { return n >= 1e6 ? (n / 1e6).toFixed(1) + ' M' : Math.round(n / 1e3) + ' K'; };
-            function done() { if (overlay) overlay.classList.add('hidden'); }
-            function tick() {
-              var pts = countPts(), elapsed = Date.now() - t0;
-              if (loadText && pts > 0) loadText.textContent = 'Cargando nube · ' + fmtM(pts) + ' puntos';
-              var grew = pts > lastPts * 1.02 + 2000;
-              if (pts > lastPts) lastPts = pts;
-              stable = grew ? 0 : stable + 1;
-              // afinada: estable ~2.4 s con suficientes puntos · o timeout 40 s
-              if ((stable >= 4 && pts > 50000 && elapsed > 4000) || elapsed > 40000) done();
-              else setTimeout(tick, 600);
-            }
-            setTimeout(tick, 700);
+            (function tick() {
+              if (pts() > 0 || Date.now() - t0 > 8000) { if (overlay) overlay.classList.add('hidden'); }
+              else setTimeout(tick, 350);
+            })();
           })();
 
           // ── Wire toolbar de medición (Potree.measuringTool) ──────────────

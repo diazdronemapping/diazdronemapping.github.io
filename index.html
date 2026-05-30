@@ -848,15 +848,13 @@ tailwind.config = { theme: { extend: {
     });
   })();
 
-  // Preload del visor Potree (mejora el arranque sin tocar la data de nodos, que no
-  // puede precargarse con el iframe oculto): (1) registrar el service worker temprano
-  // → evita el "reload-once" del iframe en la 1ª visita; (2) al acercarse a Topografía,
-  // prefetch de la librería Potree + el índice de la nube (metadata/hierarchy) para que
-  // al abrir "Ver más" el streaming arranque de inmediato (lib/índice ya en caché).
+  // Preload del visor Potree: prefetch de la librería + índice de la nube al
+  // acercarse a Topografía (warm cache · arranque más rápido del streaming).
+  // ⚠ NO registrar el SW desde el padre: introducía una carrera que dejaba el
+  // iframe del visor SIN controlar → octree.bin 404 → NUBE NEGRA. El SW lo
+  // registra el propio iframe (potree-parcelas.html) con su reload-once, que es
+  // como funcionaba bien.
   (function () {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw-octree.js').catch(function () {});  // local: 404 inofensivo
-    }
     const sec = document.getElementById('topografia');
     if (!sec || !('IntersectionObserver' in window)) return;
     const assets = [
