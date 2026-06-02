@@ -612,15 +612,12 @@
   <!-- Overlay branding -->
   <div id="overlay-label">Levantamiento real · Agua Blanca, Hgo · UTM 14N · 28 M pts · Drone Mapping</div>
 
-  <!-- Selector de vista: Puntos (3D) · Realista (mesh) · Mapa (ortomosaico 2D) -->
+  <!-- Selector de vista: Puntos (nube 3D) · Mapa (ortomosaico 2D) -->
   <div id="view-mode">
     <button data-view="points" class="active">Puntos</button>
-    <button data-view="realista">Realista</button>
     <button data-view="map">Mapa</button>
   </div>
-  <!-- Vista Realista · mesh texturizado (model-viewer lazy) -->
-  <div id="realista" hidden></div>
-  <!-- Vista Mapa 2D · ortomosaico (Leaflet lazy) -->
+  <!-- Vista Mapa 2D · ortomosaico de tiles (Leaflet lazy) -->
   <div id="map2d" hidden></div>
 
   <!-- ── Dependencies (order matters for Potree 1.8) ── -->
@@ -1403,49 +1400,19 @@
     });
   </script>
 
-  <!-- ════ Selector de vista: Puntos (3D) · Realista (mesh) · Mapa (ortho 2D) ════ -->
+  <!-- ════ Selector de vista: Puntos (nube 3D) · Mapa (ortho 2D en tiles) ════ -->
   <script>
   (function () {
     const vm = document.getElementById('view-mode');
     if (!vm) return;
-    const realista = document.getElementById('realista');
     const map2d = document.getElementById('map2d');
-    let mvReady = false, mapReady = false, lmap = null;
+    let mapReady = false, lmap = null;
 
     function loadScript(src, module) {
       return new Promise((res, rej) => { const s = document.createElement('script'); if (module) s.type = 'module'; s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
     }
     function loadCSS(href) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l); }
 
-    async function ensureRealista() {
-      if (mvReady) return; mvReady = true;
-      try { await loadScript('https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js', true); }
-      catch (e) { realista.innerHTML = '<div style="color:#bbb;font:13px monospace;display:grid;place-items:center;height:100%">No se pudo cargar el visor 3D realista.</div>'; return; }
-      const mv = document.createElement('model-viewer');
-      mv.setAttribute('src', '/assets/_potree/clouds/agua-blanca/realista.glb');
-      mv.setAttribute('alt', 'Terreno 3D texturizado · ortomosaico drapeado sobre el modelo de terreno (DTM)');
-      mv.setAttribute('camera-controls', '');
-      mv.setAttribute('touch-action', 'none');
-      mv.setAttribute('interaction-prompt', 'none');
-      // Terreno drapeado (la textura ES la luz capturada por el dron) → iluminación
-      // pareja + colores fieles. tone-mapping neutral evita el lavado/saturación de ACES;
-      // sin sombra de piso (es una superficie, no un objeto). Las normales suaves dan el
-      // relieve 3D (clave: el GLB viejo no tenía normales → se veía facetado "chafa").
-      mv.setAttribute('tone-mapping', 'neutral');
-      mv.setAttribute('exposure', '1.0');
-      mv.setAttribute('shadow-intensity', '0');
-      mv.setAttribute('camera-orbit', '0deg 58deg auto');     // oblicuo picado
-      mv.setAttribute('min-camera-orbit', 'auto 12deg auto');
-      mv.setAttribute('max-camera-orbit', 'auto 82deg auto'); // no pasar bajo el terreno
-      mv.setAttribute('field-of-view', '38deg');
-      mv.setAttribute('min-field-of-view', '10deg');
-      mv.setAttribute('max-field-of-view', '55deg');
-      mv.setAttribute('auto-rotate', '');
-      mv.setAttribute('auto-rotate-delay', '2500');
-      mv.setAttribute('rotation-per-second', '8deg');         // giro lento de showcase
-      mv.style.width = '100%'; mv.style.height = '100%';
-      realista.appendChild(mv);
-    }
     async function ensureMap() {
       if (mapReady) return; mapReady = true;
       loadCSS('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
@@ -1474,9 +1441,7 @@
     async function setView(v) {
       vm.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.view === v));
       document.body.classList.toggle('alt-view', v !== 'points');
-      realista.hidden = (v !== 'realista');
       map2d.hidden = (v !== 'map');
-      if (v === 'realista') await ensureRealista();
       if (v === 'map') { await ensureMap(); setTimeout(() => { if (lmap) lmap.invalidateSize(); }, 120); }
     }
     vm.querySelectorAll('button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
