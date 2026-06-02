@@ -197,6 +197,43 @@
       flex-shrink: 0;
     }
 
+    /* Capas / filtro de clasificación */
+    #layers { position: absolute; top: 118px; right: 12px; z-index: 31; }
+    #layers-btn {
+      font-family: 'Space Grotesk', monospace, sans-serif; font-size: 11px;
+      letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.85);
+      background: rgba(15,15,15,0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(123,193,66,0.35); border-radius: 999px; padding: 6px 12px;
+      cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; margin-left: auto;
+    }
+    #layers-btn .ti { font-size: 13px; }
+    #layers-btn.open { background: rgba(123,193,66,0.28); border-color: rgba(123,193,66,0.7); color: #fff; }
+    #layers-panel {
+      position: absolute; top: 40px; right: 0; width: 250px; max-width: calc(100vw - 24px);
+      background: rgba(15,15,15,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 12px;
+      display: flex; flex-direction: column; gap: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    #layers-panel[hidden] { display: none; }
+    #layers .lp-sec { display: flex; flex-direction: column; gap: 8px; }
+    #layers .lp-lbl {
+      font-family: 'Space Grotesk', monospace; font-size: 9.5px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.5);
+    }
+    #layers .lp-chips, #layers .lp-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    #layers .lp-chip, #layers .lp-act {
+      font-family: 'Space Grotesk', monospace, sans-serif; font-size: 11px; letter-spacing: 0.03em;
+      color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(123,193,66,0.30); border-radius: 999px; padding: 6px 11px;
+      cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, opacity .15s;
+    }
+    #layers .lp-chip[data-grp].on { border-color: rgba(123,193,66,0.6); color: #fff; background: rgba(123,193,66,0.14); }
+    #layers .lp-chip[data-grp]:not(.on) { opacity: 0.5; text-decoration: line-through; }
+    #layers .lp-chip[data-layer] { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
+    #layers .lp-chip[data-layer].active { border-color: rgba(123,193,66,0.7); color: #fff; background: rgba(123,193,66,0.2); }
+    #layers .lp-act { border-color: rgba(123,193,66,0.5); color: #cde8a8; }
+    #layers .lp-act.ghost { border-color: rgba(255,255,255,0.18); color: rgba(255,255,255,0.6); }
+
     /* Leyenda de elevación · horizontal · solo visible en modo 'elevation' */
     #elevation-legend {
       position: absolute;
@@ -474,7 +511,9 @@
     <button data-tool="area"     title="Medir área"><span class="ti">▱</span><span class="tl">Área</span></button>
     <button data-tool="height"   title="Medir altura"><span class="ti">↕</span><span class="tl">Altura</span></button>
     <button data-tool="point"    title="Marcar punto"><span class="ti">·</span><span class="tl">Punto</span></button>
-    <button data-tool="clear" class="clear" title="Borrar medidas"><span class="ti">✕</span><span class="tl">Limpiar</span></button>
+    <button data-tool="profile"  title="Perfil del terreno"><span class="ti">⌇</span><span class="tl">Perfil</span></button>
+    <button data-tool="volume"   title="Volumen · cubicación"><span class="ti">▦</span><span class="tl">Volumen</span></button>
+    <button data-tool="clear" class="clear" title="Borrar todo"><span class="ti">✕</span><span class="tl">Limpiar</span></button>
   </div>
 
   <!-- Selector de coloreado · 3 modos · RGB por default -->
@@ -490,6 +529,31 @@
     <div class="row">
       <input type="range" id="density-slider" min="500000" max="8000000" step="500000" value="4000000" />
       <span class="value" id="density-value">4 M</span>
+    </div>
+  </div>
+
+  <!-- Capas / filtro de clasificación · panel colapsable -->
+  <div id="layers">
+    <button id="layers-btn" title="Capas y filtro"><span class="ti">≣</span><span class="tl">Capas</span></button>
+    <div id="layers-panel" hidden>
+      <div class="lp-sec">
+        <span class="lp-lbl">Filtro de puntos · ver el terreno limpio</span>
+        <div class="lp-chips">
+          <button data-grp="veg"   class="lp-chip on">Vegetación</button>
+          <button data-grp="const" class="lp-chip on">Construcciones</button>
+          <button data-grp="obj"   class="lp-chip on">Objetos · ruido</button>
+        </div>
+        <div class="lp-actions">
+          <button data-act="ground" class="lp-act">Solo terreno</button>
+          <button data-act="all" class="lp-act ghost">Mostrar todo</button>
+        </div>
+      </div>
+      <div class="lp-sec">
+        <span class="lp-lbl">Capas</span>
+        <div class="lp-chips">
+          <button data-layer="contours" class="lp-chip">Curvas de nivel · 1 m</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -924,15 +988,20 @@
           // Activación de herramienta (reusable: botones in-iframe + comandos externos del deck)
           function clearMeasurements() {
             viewer.scene.measurements.slice().forEach(m => viewer.scene.removeMeasurement(m));
+            try { viewer.scene.profiles.slice().forEach(p => viewer.scene.removeProfile(p)); } catch (e) {}
+            try { viewer.scene.volumes.slice().forEach(v => viewer.scene.removeVolume(v)); } catch (e) {}
             toolBtns.forEach(b => b.classList.remove('active'));
             closeAllCards();
+            if (typeof clearExtraCards === 'function') clearExtraCards();
             measuringActive = false;   // reanuda la navegación táctil
             if (externalControls) parent.postMessage({ source:'potree-state', action:'tool', value:null }, '*');
           }
           function activateTool(tool) {
             if (tool === 'clear') { clearMeasurements(); return; }
             toolBtns.forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
-            measuringActive = true;    // mientras se mide, el gesto coloca puntos (no navega)
+            measuringActive = true;    // mientras se mide/dibuja, el gesto coloca puntos (no navega)
+            if (tool === 'profile') { startProfileTool(); return; }
+            if (tool === 'volume')  { startVolumeTool();  return; }
             const m = measuringTool.startInsertion(presets[tool]);
             wireMeasure(m);
             openCard(m);   // feedback en vivo: la card aparece y se actualiza al colocar puntos
@@ -1003,6 +1072,169 @@
           dSlider.addEventListener('input', () => applyDensity(dSlider.value));
           // Sync inicial: el slider ya marca 4M = lo que ya setteamos arriba
           dValue.textContent = fmtBudget(parseInt(dSlider.value, 10));
+
+          // ════════════════════════════════════════════════════════════════
+          //  Panel "Capas" + F1 filtro clasificación + F2 curvas + F3 perfil + F4 volumen
+          // ════════════════════════════════════════════════════════════════
+          const layersBtn = document.getElementById('layers-btn');
+          const layersPanel = document.getElementById('layers-panel');
+          if (layersBtn && layersPanel) {
+            layersBtn.addEventListener('click', () => {
+              const willOpen = layersPanel.hasAttribute('hidden');
+              if (willOpen) layersPanel.removeAttribute('hidden'); else layersPanel.setAttribute('hidden', '');
+              layersBtn.classList.toggle('open', willOpen);
+            });
+          }
+
+          // ── F1 · Filtro de clasificación (ver terreno limpio) ──────────
+          // Terreno = 2 ground + 9 agua (nunca se ocultan). Grupos togglables:
+          const CLASS_GROUPS = { veg: [3,4,5], const: [6], obj: [0,1,7,8,12] };
+          function setGroupVisible(grp, vis) {
+            (CLASS_GROUPS[grp] || []).forEach(c => viewer.setClassificationVisibility(c, vis));
+          }
+          const grpChips = Array.from(document.querySelectorAll('#layers .lp-chip[data-grp]'));
+          function setChip(chip, on) { chip.classList.toggle('on', on); setGroupVisible(chip.dataset.grp, on); }
+          // Al ocultar algo en modo RGB, pasar a Elevación para que el suelo se lea.
+          function colorForCleanIfNeeded() {
+            const anyHidden = grpChips.some(c => !c.classList.contains('on'));
+            if (anyHidden && material.activeAttributeName === 'rgba') applyColor('elevation');
+          }
+          grpChips.forEach(chip => chip.addEventListener('click', () => { setChip(chip, !chip.classList.contains('on')); colorForCleanIfNeeded(); }));
+          document.querySelectorAll('#layers .lp-act').forEach(btn => btn.addEventListener('click', () => {
+            const showAll = btn.dataset.act === 'all';
+            grpChips.forEach(chip => setChip(chip, showAll));
+            if (!showAll && material.activeAttributeName === 'rgba') applyColor('elevation');
+          }));
+
+          // ── F2 · Curvas de nivel (overlay vectorial) ───────────────────
+          let contourGroup = null, contoursReady = false, contoursLoading = false;
+          const contoursChip = document.querySelector('#layers .lp-chip[data-layer="contours"]');
+          function harvestTHREE() {
+            const Vector3 = viewer.scene.view.position.constructor;
+            let LineCls, GeomCls, MatCls;
+            try {
+              const probe = new Potree.BoxVolume();
+              probe.traverse(o => {
+                if (o.geometry && o.material && /Line/.test(o.type || '')) {
+                  LineCls = o.constructor; GeomCls = o.geometry.constructor; MatCls = o.material.constructor;
+                }
+              });
+            } catch (e) { console.warn('harvest THREE falló', e); }
+            return (LineCls && GeomCls && MatCls) ? { Vector3, LineCls, GeomCls, MatCls } : null;
+          }
+          function buildContours(data, T) {
+            const verts = [];
+            data.forEach(poly => { for (let i = 1; i < poly.length; i++) {
+              const a = poly[i-1], b = poly[i];
+              verts.push(new T.Vector3(a[0], a[1], a[2]));
+              verts.push(new T.Vector3(b[0], b[1], b[2]));
+            }});
+            const geom = new T.GeomCls();
+            geom.setFromPoints(verts);
+            const mat = new T.MatCls({ color: 0xC8F08A, transparent: true, opacity: 0.9, depthWrite: false });
+            const seg = new T.LineCls(geom, mat);
+            seg.name = 'contours-overlay';
+            return seg;
+          }
+          async function ensureContours() {
+            if (contoursReady || contoursLoading) return;
+            contoursLoading = true;
+            try {
+              const data = await fetch('/assets/_potree/clouds/agua-blanca/contours.json').then(r => r.json());
+              const T = harvestTHREE();
+              if (!T) { contoursChip.textContent = 'Curvas (no disp.)'; return; }
+              contourGroup = buildContours(data, T);
+              contourGroup.visible = false;
+              viewer.scene.scene.add(contourGroup);
+              contoursReady = true;
+            } catch (e) { console.warn('curvas error', e); }
+            finally { contoursLoading = false; }
+          }
+          if (contoursChip) contoursChip.addEventListener('click', async () => {
+            await ensureContours();
+            if (!contourGroup) return;
+            const show = !contoursChip.classList.contains('active');
+            contoursChip.classList.toggle('active', show);
+            contourGroup.visible = show;
+          });
+
+          // ── Cards extra (volumen/perfil) · reusan cardTemplate/stack ────
+          const extraCards = new Set();
+          function addExtraCard() {
+            const el = cardTemplate(); stack.appendChild(el);
+            document.body.classList.add('measure-open'); extraCards.add(el); return el;
+          }
+          function removeExtraCard(el) {
+            if (el) { el.remove(); extraCards.delete(el); }
+            if (cards.size === 0 && extraCards.size === 0) document.body.classList.remove('measure-open');
+          }
+          function clearExtraCards() { extraCards.forEach(el => el.remove()); extraCards.clear(); }
+
+          // ── F4 · Volumen / cubicación ──────────────────────────────────
+          function startVolumeTool() {
+            let vol;
+            try { vol = viewer.volumeTool.startInsertion({ clip: false }); }
+            catch (e) { console.warn('volumeTool falló', e); return; }
+            const el = addExtraCard();
+            el.querySelector('.mi-close').addEventListener('click', () => { try { viewer.scene.removeVolume(vol); } catch (e) {} removeExtraCard(el); });
+            let last = '';
+            const paint = () => {
+              if (!vol) return;
+              const sx = vol.scale.x, sy = vol.scale.y, sz = vol.scale.z;
+              const key = sx.toFixed(2)+sy.toFixed(2)+sz.toFixed(2);
+              if (key === last) return; last = key;
+              let m3 = 0; try { m3 = vol.getVolume(); } catch (e) { m3 = sx*sy*sz; }
+              paintCard(el, { type: 'Volumen', val: nf(m3, m3 >= 100 ? 0 : 1), unit: 'm³', rows: [
+                ['Largo', nf(sx, 1) + ' m'], ['Ancho', nf(sy, 1) + ' m'], ['Alto', nf(sz, 1) + ' m']
+              ], segs: null });
+            };
+            paint();
+            const onUpd = () => paint();
+            viewer.addEventListener('update', onUpd);
+            viewer.scene.addEventListener('volume_removed', function h(e) { if (e.volume === vol) { viewer.removeEventListener('update', onUpd); viewer.scene.removeEventListener('volume_removed', h); } });
+          }
+
+          // ── F3 · Perfil topográfico ────────────────────────────────────
+          function renderProfileChart(el, pts) {
+            const P = (pts || []).map(p => ({ x: p.x, y: p.y, z: p.z }));
+            if (P.length < 2) {
+              paintCard(el, { type: 'Perfil del terreno', val: '—', unit: 'traza la línea sobre el terreno', rows: [['Vértices', P.length]], segs: null });
+              return;
+            }
+            const dcum = [0]; let total = 0;
+            for (let i = 1; i < P.length; i++) { total += Math.hypot(P[i].x - P[i-1].x, P[i].y - P[i-1].y); dcum.push(total); }
+            let zmin = Infinity, zmax = -Infinity; P.forEach(p => { zmin = Math.min(zmin, p.z); zmax = Math.max(zmax, p.z); });
+            const dz = zmax - zmin;
+            const W = 230, H = 86, padL = 3, padR = 3, padT = 7, padB = 12;
+            const sx = d => padL + (total > 0 ? d / total : 0) * (W - padL - padR);
+            const sy = z => padT + (dz > 0 ? (zmax - z) / dz : 0.5) * (H - padT - padB);
+            let line = '', area = 'M' + sx(0).toFixed(1) + ',' + (H - padB);
+            P.forEach((p, i) => { const X = sx(dcum[i]).toFixed(1), Y = sy(p.z).toFixed(1); line += (i ? 'L' : 'M') + X + ',' + Y + ' '; area += 'L' + X + ',' + Y + ' '; });
+            area += 'L' + sx(total).toFixed(1) + ',' + (H - padB) + ' Z';
+            const svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" preserveAspectRatio="none" style="display:block;margin-top:2px">' +
+              '<path d="' + area + '" fill="rgba(123,193,66,0.16)"/>' +
+              '<path d="' + line + '" fill="none" stroke="#A5D570" stroke-width="1.6"/></svg>';
+            const slope = total > 0 ? (Math.abs(P[P.length-1].z - P[0].z) / total * 100) : 0;
+            el.querySelector('.mi-type-label').textContent = 'Perfil del terreno';
+            el.querySelector('.mi-primary .val').textContent = nf(total, 1);
+            el.querySelector('.mi-primary .unit').textContent = 'm  (longitud)';
+            el.querySelector('.mi-rows').innerHTML =
+              '<div class="mi-row"><span class="k">Desnivel</span><span class="v"><b>' + nf(dz, 2) + '</b> m</span></div>' +
+              '<div class="mi-row"><span class="k">Elev. máx · mín</span><span class="v">' + nf(zmax, 1) + ' · ' + nf(zmin, 1) + ' m</span></div>' +
+              '<div class="mi-row"><span class="k">Pendiente media</span><span class="v">' + nf(slope, 1) + ' %</span></div>';
+            const seg = el.querySelector('.mi-segs'); seg.style.display = 'block'; seg.innerHTML = svg;
+          }
+          function startProfileTool() {
+            let profile;
+            try { profile = viewer.profileTool.startInsertion({ width: 0 }); }
+            catch (e) { console.warn('profileTool falló', e); return; }
+            try { profile.setWidth(4); } catch (e) {}
+            const el = addExtraCard();
+            el.querySelector('.mi-close').addEventListener('click', () => { try { viewer.scene.removeProfile(profile); } catch (e) {} removeExtraCard(el); });
+            const refresh = () => renderProfileChart(el, profile.points || []);
+            ['marker_added','marker_moved','marker_dropped','marker_removed'].forEach(ev => { try { profile.addEventListener(ev, refresh); } catch (e) {} });
+            refresh();
+          }
 
           // ── Comandos del padre (modo ?controls=external · controles arriba del iframe) ──
           if (externalControls) {
