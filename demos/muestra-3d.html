@@ -234,6 +234,33 @@
     #layers .lp-act { border-color: rgba(123,193,66,0.5); color: #cde8a8; }
     #layers .lp-act.ghost { border-color: rgba(255,255,255,0.18); color: rgba(255,255,255,0.6); }
 
+    /* Selector de vista: Puntos / Realista / Mapa */
+    #view-mode {
+      position: absolute; left: 50%; transform: translateX(-50%); bottom: 14px; z-index: 45;
+      display: flex; gap: 4px; background: rgba(15,15,15,0.82);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 4px;
+    }
+    #view-mode button {
+      font-family: 'Space Grotesk', monospace, sans-serif; font-size: 11px; letter-spacing: 0.07em;
+      text-transform: uppercase; color: rgba(255,255,255,0.6); background: transparent; border: 0;
+      border-radius: 999px; padding: 7px 17px; cursor: pointer; transition: background .18s, color .18s;
+    }
+    #view-mode button.active { background: rgba(123,193,66,0.38); color: #fff; }
+    /* Vistas alternas (mesh / mapa) ocupan toda la pantalla; el selector queda encima */
+    #realista, #map2d { position: absolute; inset: 0; z-index: 38; background: #0F0F0F; }
+    #realista[hidden], #map2d[hidden] { display: none; }
+    #realista model-viewer { width: 100%; height: 100%; background-color: #0F0F0F; }
+    /* En vista alterna se ocultan los controles de Potree (el selector NO) */
+    body.alt-view #potree_render_area,
+    body.alt-view #measure-toolbar, body.alt-view #color-toggle, body.alt-view #density-control,
+    body.alt-view #layers, body.alt-view #elevation-legend, body.alt-view #measure-stack,
+    body.alt-view #loading-overlay { display: none !important; }
+    /* el overlay-label se mantiene como marca; en móvil el selector sube si choca */
+    @media (max-width: 600px) {
+      #view-mode { bottom: 10px; }
+    }
+
     /* Leyenda de elevación · horizontal · solo visible en modo 'elevation' */
     #elevation-legend {
       position: absolute;
@@ -584,6 +611,17 @@
 
   <!-- Overlay branding -->
   <div id="overlay-label">Levantamiento real · Agua Blanca, Hgo · UTM 14N · 28 M pts · Drone Mapping</div>
+
+  <!-- Selector de vista: Puntos (3D) · Realista (mesh) · Mapa (ortomosaico 2D) -->
+  <div id="view-mode">
+    <button data-view="points" class="active">Puntos</button>
+    <button data-view="realista">Realista</button>
+    <button data-view="map">Mapa</button>
+  </div>
+  <!-- Vista Realista · mesh texturizado (model-viewer lazy) -->
+  <div id="realista" hidden></div>
+  <!-- Vista Mapa 2D · ortomosaico (Leaflet lazy) -->
+  <div id="map2d" hidden></div>
 
   <!-- ── Dependencies (order matters for Potree 1.8) ── -->
 
@@ -1106,8 +1144,8 @@
             if (!showAll && material.activeAttributeName === 'rgba') applyColor('elevation');
           }));
 
-          // ── F2 · Curvas de nivel (overlay vectorial) ───────────────────
-          let contourGroup = null, contoursReady = false, contoursLoading = false;
+          // ── F2 · Curvas de nivel (overlay vectorial) + F5 etiquetas ────
+          let contourGroup = null, contourLabels = [], contoursReady = false, contoursLoading = false;
           const contoursChip = document.querySelector('#layers .lp-chip[data-layer="contours"]');
           function harvestTHREE() {
             const Vector3 = viewer.scene.view.position.constructor;
@@ -1136,6 +1174,28 @@
             seg.name = 'contours-overlay';
             return seg;
           }
+          // F5 · Etiquetas de elevación en las curvas índice (cada 5 m) · TextSprite
+          function buildContourLabels(data) {
+            const labels = [], perLevel = {};
+            data.forEach(poly => {
+              if (poly.length < 5) return;
+              const mid = poly[Math.floor(poly.length / 2)];
+              const zr = Math.round(mid[2]);
+              if (zr % 5 !== 0) return;                       // solo curvas índice
+              if ((perLevel[zr] || 0) >= 2) return;           // máx 2 etiquetas por nivel
+              perLevel[zr] = (perLevel[zr] || 0) + 1;
+              let spr;
+              try { spr = new Potree.TextSprite(zr + ' m'); } catch (e) { return; }
+              try { if (spr.setTextColor)       spr.setTextColor({ r: 215, g: 240, b: 155, a: 1 }); } catch (e) {}
+              try { if (spr.setBackgroundColor) spr.setBackgroundColor({ r: 18, g: 24, b: 12, a: 0.6 }); } catch (e) {}
+              try { if (spr.setBorderColor)     spr.setBorderColor({ r: 123, g: 193, b: 66, a: 0.7 }); } catch (e) {}
+              spr.position.set(mid[0], mid[1], mid[2] + 1.0);
+              if (spr.scale && spr.scale.set) spr.scale.set(6, 6, 6);
+              spr.name = 'contour-label';
+              labels.push(spr);
+            });
+            return labels;
+          }
           async function ensureContours() {
             if (contoursReady || contoursLoading) return;
             contoursLoading = true;
@@ -1146,6 +1206,8 @@
               contourGroup = buildContours(data, T);
               contourGroup.visible = false;
               viewer.scene.scene.add(contourGroup);
+              contourLabels = buildContourLabels(data);
+              contourLabels.forEach(s => { s.visible = false; viewer.scene.scene.add(s); });
               contoursReady = true;
             } catch (e) { console.warn('curvas error', e); }
             finally { contoursLoading = false; }
@@ -1156,6 +1218,19 @@
             const show = !contoursChip.classList.contains('active');
             contoursChip.classList.toggle('active', show);
             contourGroup.visible = show;
+            contourLabels.forEach(s => { s.visible = show; });
+          });
+          // Etiquetas con tamaño ~constante en pantalla (TextSprite no se auto-escala
+          // si no está en el árbol de anotaciones de Potree → escalar por distancia).
+          viewer.addEventListener('update', () => {
+            if (!contourLabels.length) return;
+            const cam = viewer.scene.getActiveCamera();
+            for (const s of contourLabels) {
+              if (!s.visible) continue;
+              const d = cam.position.distanceTo(s.position);
+              const k = Math.max(1.5, d * 0.045);
+              s.scale.set(k, k, k);
+            }
           });
 
           // ── Cards extra (volumen/perfil) · reusan cardTemplate/stack ────
@@ -1326,6 +1401,61 @@
       }
 
     });
+  </script>
+
+  <!-- ════ Selector de vista: Puntos (3D) · Realista (mesh) · Mapa (ortho 2D) ════ -->
+  <script>
+  (function () {
+    const vm = document.getElementById('view-mode');
+    if (!vm) return;
+    const realista = document.getElementById('realista');
+    const map2d = document.getElementById('map2d');
+    let mvReady = false, mapReady = false, lmap = null;
+
+    function loadScript(src, module) {
+      return new Promise((res, rej) => { const s = document.createElement('script'); if (module) s.type = 'module'; s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+    }
+    function loadCSS(href) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l); }
+
+    async function ensureRealista() {
+      if (mvReady) return; mvReady = true;
+      try { await loadScript('https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js', true); }
+      catch (e) { realista.innerHTML = '<div style="color:#bbb;font:13px monospace;display:grid;place-items:center;height:100%">No se pudo cargar el visor 3D realista.</div>'; return; }
+      const mv = document.createElement('model-viewer');
+      mv.setAttribute('src', '/assets/_potree/clouds/agua-blanca/realista.glb');
+      mv.setAttribute('alt', 'Modelo 3D texturizado del terreno');
+      mv.setAttribute('camera-controls', '');
+      mv.setAttribute('touch-action', 'none');
+      mv.setAttribute('interaction-prompt', 'none');
+      mv.setAttribute('exposure', '1.05');
+      mv.setAttribute('shadow-intensity', '0.5');
+      mv.setAttribute('camera-orbit', '-10deg 68deg auto');
+      mv.setAttribute('min-field-of-view', '12deg');
+      mv.style.width = '100%'; mv.style.height = '100%';
+      realista.appendChild(mv);
+    }
+    async function ensureMap() {
+      if (mapReady) return; mapReady = true;
+      loadCSS('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+      try { await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'); }
+      catch (e) { map2d.innerHTML = '<div style="color:#bbb;font:13px monospace;display:grid;place-items:center;height:100%">No se pudo cargar el mapa.</div>'; return; }
+      lmap = L.map('map2d', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 4, attributionControl: false, zoomControl: true, zoomSnap: 0.25 });
+      const W = 9000, H = 7937, f = 0.02;            // factor → zooms manejables
+      const bounds = [[0, 0], [H * f, W * f]];        // CRS.Simple: [y, x]
+      L.imageOverlay('/assets/_potree/clouds/agua-blanca/ortho.jpg', bounds).addTo(lmap);
+      lmap.fitBounds(bounds);
+    }
+
+    async function setView(v) {
+      vm.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+      document.body.classList.toggle('alt-view', v !== 'points');
+      realista.hidden = (v !== 'realista');
+      map2d.hidden = (v !== 'map');
+      if (v === 'realista') await ensureRealista();
+      if (v === 'map') { await ensureMap(); setTimeout(() => { if (lmap) lmap.invalidateSize(); }, 120); }
+    }
+    vm.querySelectorAll('button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  })();
   </script>
 </body>
 </html>
