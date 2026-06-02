@@ -1423,14 +1423,26 @@
       catch (e) { realista.innerHTML = '<div style="color:#bbb;font:13px monospace;display:grid;place-items:center;height:100%">No se pudo cargar el visor 3D realista.</div>'; return; }
       const mv = document.createElement('model-viewer');
       mv.setAttribute('src', '/assets/_potree/clouds/agua-blanca/realista.glb');
-      mv.setAttribute('alt', 'Modelo 3D texturizado del terreno');
+      mv.setAttribute('alt', 'Terreno 3D texturizado · ortomosaico drapeado sobre el modelo de superficie');
       mv.setAttribute('camera-controls', '');
       mv.setAttribute('touch-action', 'none');
       mv.setAttribute('interaction-prompt', 'none');
-      mv.setAttribute('exposure', '1.05');
-      mv.setAttribute('shadow-intensity', '0.5');
-      mv.setAttribute('camera-orbit', '-10deg 68deg auto');
-      mv.setAttribute('min-field-of-view', '12deg');
+      // Terreno drapeado (la textura ES la luz capturada por el dron) → iluminación
+      // pareja + colores fieles. tone-mapping neutral evita el lavado/saturación de ACES;
+      // sin sombra de piso (es una superficie, no un objeto). Las normales suaves dan el
+      // relieve 3D (clave: el GLB viejo no tenía normales → se veía facetado "chafa").
+      mv.setAttribute('tone-mapping', 'neutral');
+      mv.setAttribute('exposure', '1.0');
+      mv.setAttribute('shadow-intensity', '0');
+      mv.setAttribute('camera-orbit', '0deg 58deg auto');     // oblicuo picado
+      mv.setAttribute('min-camera-orbit', 'auto 12deg auto');
+      mv.setAttribute('max-camera-orbit', 'auto 82deg auto'); // no pasar bajo el terreno
+      mv.setAttribute('field-of-view', '38deg');
+      mv.setAttribute('min-field-of-view', '10deg');
+      mv.setAttribute('max-field-of-view', '55deg');
+      mv.setAttribute('auto-rotate', '');
+      mv.setAttribute('auto-rotate-delay', '2500');
+      mv.setAttribute('rotation-per-second', '8deg');         // giro lento de showcase
       mv.style.width = '100%'; mv.style.height = '100%';
       realista.appendChild(mv);
     }
@@ -1439,10 +1451,23 @@
       loadCSS('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
       try { await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'); }
       catch (e) { map2d.innerHTML = '<div style="color:#bbb;font:13px monospace;display:grid;place-items:center;height:100%">No se pudo cargar el mapa.</div>'; return; }
-      lmap = L.map('map2d', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 4, attributionControl: false, zoomControl: true, zoomSnap: 0.25 });
-      const W = 9000, H = 7937, f = 0.02;            // factor → zooms manejables
-      const bounds = [[0, 0], [H * f, W * f]];        // CRS.Simple: [y, x]
-      L.imageOverlay('/assets/_potree/clouds/agua-blanca/ortho.jpg', bounds).addTo(lmap);
+      // ── Capa de tiles geográfica (EPSG:3857) · ortomosaico full-res en pirámide ──
+      // Reemplaza al ortho.jpg único en CRS.Simple (se pixelaba al acercar). Pirámide
+      // Pix4D z16-21 = x slippy estándar + y TMS (origen sur) → {tms:true}.
+      // maxNativeZoom 21 ≈ 7 cm/px (supera el ortho nativo ~10 cm) · maxZoom 23 deja
+      // a Leaflet escalar los tiles z21 para acercamiento extra SIN enviar z22 (322 MB).
+      const bounds = L.latLngBounds([20.37102096, -98.37295532], [20.37584864, -98.36883545]);
+      lmap = L.map('map2d', {
+        attributionControl: false, zoomControl: true, zoomSnap: 0.25,
+        minZoom: 16, maxZoom: 23, maxBounds: bounds.pad(0.25), maxBoundsViscosity: 0.6
+      });
+      // Tile transparente 1px para huecos del borde (la cobertura no es un rectángulo
+      // perfecto) → fondo oscuro en vez del ícono de imagen rota.
+      const BLANK = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+      L.tileLayer('/assets/_potree/clouds/agua-blanca/ortho_tiles/{z}/{x}/{y}.png', {
+        tms: true, minZoom: 16, maxNativeZoom: 21, maxZoom: 23,
+        bounds: bounds, noWrap: true, errorTileUrl: BLANK
+      }).addTo(lmap);
       lmap.fitBounds(bounds);
     }
 
