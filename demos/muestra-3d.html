@@ -1217,6 +1217,14 @@
             contourGroup.visible = show;
             contourLabels.forEach(s => { s.visible = show; });
           });
+          // Curvas de nivel encendidas desde el inicio (decisión Diego 2026-06-03)
+          (async () => {
+            await ensureContours();
+            if (!contourGroup) return;
+            contourGroup.visible = true;
+            contourLabels.forEach(s => { s.visible = true; });
+            if (contoursChip) contoursChip.classList.add('active');
+          })();
           // Etiquetas con tamaño ~constante en pantalla (TextSprite no se auto-escala
           // si no está en el árbol de anotaciones de Potree → escalar por distancia).
           viewer.addEventListener('update', () => {
