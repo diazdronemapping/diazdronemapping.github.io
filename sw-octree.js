@@ -34,7 +34,7 @@ async function readRange(start, end){ // inclusive end
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin || !url.pathname.endsWith('octree.bin')) return;
+  if (url.origin !== self.location.origin || url.pathname !== TARGET) return;
   event.respondWith((async () => {
     const range = event.request.headers.get('range');
     let start = 0, end = TOTAL - 1;

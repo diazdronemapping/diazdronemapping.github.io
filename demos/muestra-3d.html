@@ -254,7 +254,7 @@
     /* En vista alterna se ocultan los controles de Potree (el selector NO) */
     body.alt-view #potree_render_area,
     body.alt-view #measure-toolbar, body.alt-view #color-toggle, body.alt-view #density-control,
-    body.alt-view #layers, body.alt-view #elevation-legend, body.alt-view #measure-stack,
+    body.alt-view #layers, body.alt-view #elevation-legend, body.alt-view #class-legend, body.alt-view #measure-stack,
     body.alt-view #loading-overlay { display: none !important; }
     /* el overlay-label se mantiene como marca; en móvil el selector sube si choca */
     @media (max-width: 600px) {
@@ -334,6 +334,38 @@
     #elevation-legend .labels span.edge-left  { transform: translateX(0); }
     #elevation-legend .labels span.edge-right { transform: translateX(-100%); }
     #elevation-legend .labels b { color: rgba(255,255,255,0.96); font-weight: 600; }
+
+    /* Leyenda de clasificación · vertical · solo visible en modo 'classification' */
+    #class-legend {
+      position: absolute;
+      bottom: 12px; right: 12px;
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(15,15,15,0.40);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 9px 12px 11px;
+      width: 168px;
+      font-family: 'Space Grotesk', monospace;
+    }
+    #class-legend.visible { display: flex; }
+    #class-legend .title {
+      font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+    #class-legend .cl-items { display: flex; flex-direction: column; gap: 6px; }
+    #class-legend .cl-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: rgba(255,255,255,0.88); line-height: 1;
+    }
+    #class-legend .cl-sw {
+      width: 13px; height: 13px; border-radius: 3px; flex: none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+    }
 
     /* Stack de cards de medición · bottom-left · una card por medición (apiladas) */
     #measure-stack {
@@ -469,7 +501,8 @@
     body.ctrl-external #measure-toolbar,
     body.ctrl-external #color-toggle,
     body.ctrl-external #density-control,
-    body.ctrl-external #elevation-legend { display: none !important; }
+    body.ctrl-external #elevation-legend,
+    body.ctrl-external #class-legend { display: none !important; }
 
     /* ──────────────────────────────────────────────────────────────────
        Móvil (≤600px) · reacomodo de overlays para que NO se enciman.
@@ -567,8 +600,7 @@
         <span class="lp-lbl">Filtro de puntos · ver el terreno limpio</span>
         <div class="lp-chips">
           <button data-grp="veg"   class="lp-chip on">Vegetación</button>
-          <button data-grp="const" class="lp-chip on">Construcciones</button>
-          <button data-grp="obj"   class="lp-chip on">Objetos · ruido</button>
+          <button data-grp="const" class="lp-chip on">Edificación</button>
         </div>
         <div class="lp-actions">
           <button data-act="ground" class="lp-act">Solo terreno</button>
@@ -606,11 +638,24 @@
     </div>
   </div>
 
+  <!-- Leyenda de clasificación · solo visible cuando el coloreado activo es 'classification' -->
+  <div id="class-legend" aria-hidden="true">
+    <div class="title"><span>Clasificación</span></div>
+    <div class="cl-items">
+      <div class="cl-row"><span class="cl-sw" style="background:#a87b4f"></span>Suelo</div>
+      <div class="cl-row"><span class="cl-sw" style="background:#e6732e"></span>Edificación</div>
+      <div class="cl-row"><span class="cl-sw" style="background:#216b30"></span>Vegetación alta</div>
+      <div class="cl-row"><span class="cl-sw" style="background:#66b542"></span>Vegetación media</div>
+      <div class="cl-row"><span class="cl-sw" style="background:#bde36b"></span>Vegetación baja</div>
+      <div class="cl-row"><span class="cl-sw" style="background:#338ce6"></span>Agua</div>
+    </div>
+  </div>
+
   <!-- Stack de cards de medición · bottom-left · una card por medición (se crean en JS) -->
   <div id="measure-stack" aria-live="polite"></div>
 
   <!-- Overlay branding -->
-  <div id="overlay-label">Levantamiento real · Agua Blanca, Hgo · UTM 14N · 28 M pts · Drone Mapping</div>
+  <div id="overlay-label">Levantamiento real · Agua Blanca, Hgo · UTM 14N · 4.5 M pts · nube clasificada · Drone Mapping</div>
 
   <!-- Selector de vista: Puntos (nube 3D) · Mapa (ortomosaico 2D) -->
   <div id="view-mode">
@@ -705,7 +750,7 @@
 
       // ── Load cloud ───────────────────────────────────────────────────────
       Potree.loadPointCloud(
-        '/assets/_potree/clouds/agua-blanca/cloud.js',
+        '/assets/_potree/clouds/agua-blanca-reclass/metadata.json',
         'agua-blanca',
         function (e) {
           const pointcloud = e.pointcloud;
@@ -724,6 +769,25 @@
           material.rgbBrightness = 0.12;
 
           viewer.scene.addPointCloud(pointcloud);
+
+          // ── Paleta de clasificación (re-clasificada con PDAL · SMRF+altura) ──
+          // Clases ASPRS presentes: 2 Suelo · 3/4/5 Veg baja/media/alta · 6 Edificación · 9 Agua.
+          const CLASS_COLORS = {
+            2: [0.66, 0.48, 0.31, 1.0],   // Suelo · tierra cálida
+            3: [0.74, 0.89, 0.42, 1.0],   // Veg baja · lima claro
+            4: [0.40, 0.71, 0.26, 1.0],   // Veg media · verde
+            5: [0.13, 0.42, 0.19, 1.0],   // Veg alta · verde bosque
+            6: [0.90, 0.45, 0.18, 1.0],   // Edificación · naranja teja
+            9: [0.20, 0.55, 0.90, 1.0]    // Agua · azul
+          };
+          try {
+            for (const code in CLASS_COLORS) {
+              if (!viewer.classifications[code]) viewer.classifications[code] = { visible: true, name: 'class ' + code };
+              viewer.classifications[code].color = CLASS_COLORS[code];
+              viewer.classifications[code].visible = true;
+            }
+            viewer.setClassifications(viewer.classifications);
+          } catch (err) { console.warn('No pude fijar paleta de clases:', err); }
 
           // ── Diagnóstico: atributos disponibles en la nube ────────────────
           try {
@@ -1078,12 +1142,26 @@
             if (externalControls) parent.postMessage({ source:'potree-state', action:'legend', visible:isElev, ticks }, '*');
           }
 
+          // ── Leyenda de clasificación (solo visible en modo 'classification') ──
+          const classLegend = document.getElementById('class-legend');
+          function updateClassLegend(attr) {
+            if (!classLegend) return;
+            const on = attr === 'classification';
+            classLegend.classList.toggle('visible', on);
+            classLegend.setAttribute('aria-hidden', on ? 'false' : 'true');
+          }
+
           // ── Color (RGB ↔ Clasif ↔ Elevación) · reusable in-iframe + externo ──
           const colorBtns = document.querySelectorAll('#color-toggle button[data-color]');
           function applyColor(value) {
             colorBtns.forEach(b => b.classList.toggle('active', b.dataset.color === value));
             material.activeAttributeName = value;
             updateElevationLegend(value);
+            updateClassLegend(value);
+            // Curvas de nivel auto-ON en vistas técnicas (Clasificación / Elevación), OFF en RGB.
+            // setContours es function-declaration (hoisted); applyColor solo se llama por
+            // interacción del usuario (post-init) → la maquinaria de curvas ya existe.
+            if (typeof setContours === 'function') setContours(value === 'classification' || value === 'elevation');
           }
           colorBtns.forEach(btn => btn.addEventListener('click', () => applyColor(btn.dataset.color)));
           // Estado inicial (RGB por default · leyenda oculta)
@@ -1123,7 +1201,7 @@
 
           // ── F1 · Filtro de clasificación (ver terreno limpio) ──────────
           // Terreno = 2 ground + 9 agua (nunca se ocultan). Grupos togglables:
-          const CLASS_GROUPS = { veg: [3,4,5], const: [6], obj: [0,1,7,8,12] };
+          const CLASS_GROUPS = { veg: [3,4,5], const: [6], obj: [0,1,8,12] };
           function setGroupVisible(grp, vis) {
             (CLASS_GROUPS[grp] || []).forEach(c => viewer.setClassificationVisibility(c, vis));
           }
@@ -1209,13 +1287,15 @@
             } catch (e) { console.warn('curvas error', e); }
             finally { contoursLoading = false; }
           }
-          if (contoursChip) contoursChip.addEventListener('click', async () => {
+          async function setContours(show) {
             await ensureContours();
             if (!contourGroup) return;
-            const show = !contoursChip.classList.contains('active');
-            contoursChip.classList.toggle('active', show);
+            if (contoursChip) contoursChip.classList.toggle('active', show);
             contourGroup.visible = show;
             contourLabels.forEach(s => { s.visible = show; });
+          }
+          if (contoursChip) contoursChip.addEventListener('click', () => {
+            setContours(!contoursChip.classList.contains('active'));
           });
           // Etiquetas con tamaño ~constante en pantalla (TextSprite no se auto-escala
           // si no está en el árbol de anotaciones de Potree → escalar por distancia).
