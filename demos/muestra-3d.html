@@ -5,6 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ejemplo · Nube de puntos 3D · Drone Mapping MX</title>
 
+  <script>
+  /* Registrar SW que sirve octree.bin (agua-blanca-veg) desde chunks <100MB (GitHub Pages).
+     Necesario para que la NUBE cargue aunque se entre directo a este demo (sin pasar por la raíz).
+     Reload-once para que el SW controle antes del primer fetch del octree. */
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.register('/sw-octree.js').then(function () {
+      return navigator.serviceWorker.ready;
+    }).then(function () {
+      if (!navigator.serviceWorker.controller && !sessionStorage.getItem('swOctreeReloaded')) {
+        sessionStorage.setItem('swOctreeReloaded', '1');
+        location.reload();
+      }
+    }).catch(function (e) { console.warn('SW octree register failed', e); });
+  })();
+  </script>
+
   <!-- Potree CSS -->
   <link rel="stylesheet" type="text/css" href="/assets/_potree/build/potree/potree.css" />
 
@@ -259,6 +276,42 @@
     /* el overlay-label se mantiene como marca; en móvil el selector sube si choca */
     @media (max-width: 600px) {
       #view-mode { bottom: 10px; }
+    }
+
+    /* ── Vista Mapa · cromo GIS (leyenda · etiquetas de cota · deslinde) ── */
+    .contour-label {
+      color: #A7E84F; font: 600 10px/1 'Space Grotesk', monospace, sans-serif;
+      text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000;
+      background: none; border: 0; white-space: nowrap; pointer-events: none;
+    }
+    .predio-label {
+      color: #0F0F0F; font: 700 11px/1 'Space Grotesk', sans-serif;
+      background: rgba(216,255,107,0.94); padding: 3px 9px; border-radius: 7px;
+      white-space: nowrap; box-shadow: 0 1px 5px rgba(0,0,0,0.45); pointer-events: none;
+    }
+    .map-legend {
+      background: rgba(15,15,15,0.86); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      color: #e8e8e8; font: 11px/1.45 'Space Grotesk', sans-serif; padding: 11px 13px;
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 11px; max-width: 236px;
+    }
+    .map-legend h4 {
+      margin: 0 0 7px; font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: #A7E84F;
+    }
+    .map-legend .row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+    .map-legend .sw { width: 16px; flex: 0 0 auto; }
+    .map-legend .sw.line { height: 0; border-top: 3px solid; }
+    .map-legend .sw.box { height: 12px; border-radius: 2px; }
+    .map-legend .ficha {
+      margin-top: 9px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.12);
+      color: #b3b3b3; font-size: 10px; line-height: 1.55;
+    }
+    .map-legend .ficha b { color: #cfcfcf; font-weight: 600; }
+    .leaflet-control-layers, .map-legend { box-shadow: 0 4px 18px rgba(0,0,0,0.4); }
+    .leaflet-control-layers-expanded { font: 12px 'Space Grotesk', sans-serif; padding: 8px 10px 8px 8px; }
+    .leaflet-bar a { color: #222; }
+    @media (max-width: 600px) {
+      .map-legend { max-width: 200px; font-size: 10px; padding: 9px 10px; }
+      .leaflet-control-layers-expanded { font-size: 11px; }
     }
 
     /* Leyenda de elevación · horizontal · solo visible en modo 'elevation' */
@@ -1500,26 +1553,122 @@
     async function ensureMap() {
       if (mapReady) return; mapReady = true;
       loadCSS('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
-      try { await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'); }
+      try {
+        await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+        // Plugin local: clipa un tileLayer a un polígono GeoJSON (recorte del ortho al predio)
+        await loadScript('/assets/_potree/libs/leaflet-boundary-canvas/BoundaryCanvas.js');
+      }
       catch (e) { map2d.innerHTML = '<div style="color:#bbb;font:13px monospace;display:grid;place-items:center;height:100%">No se pudo cargar el mapa.</div>'; return; }
-      // ── Capa de tiles geográfica (EPSG:3857) · ortomosaico full-res en pirámide ──
-      // Reemplaza al ortho.jpg único en CRS.Simple (se pixelaba al acercar). Pirámide
-      // Pix4D z16-21 = x slippy estándar + y TMS (origen sur) → {tms:true}.
-      // maxNativeZoom 21 ≈ 7 cm/px (supera el ortho nativo ~10 cm) · maxZoom 23 deja
-      // a Leaflet escalar los tiles z21 para acercamiento extra SIN enviar z22 (322 MB).
-      const bounds = L.latLngBounds([20.37102096, -98.37295532], [20.37584864, -98.36883545]);
+
+      const C = '/assets/_potree/clouds/agua-blanca/';
+      // Bounds del vuelo (WGS84). El ortho cubre más que el predio → de ahí los bordes feos.
+      const flightBounds = L.latLngBounds([20.37102096, -98.37295532], [20.37584864, -98.36883545]);
       lmap = L.map('map2d', {
         attributionControl: false, zoomControl: true, zoomSnap: 0.25,
-        minZoom: 16, maxZoom: 23, maxBounds: bounds.pad(0.25), maxBoundsViscosity: 0.6
+        minZoom: 14, maxZoom: 23, maxBounds: flightBounds.pad(1.2), maxBoundsViscosity: 0.4
       });
-      // Tile transparente 1px para huecos del borde (la cobertura no es un rectángulo
-      // perfecto) → fondo oscuro en vez del ícono de imagen rota.
-      const BLANK = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-      L.tileLayer('/assets/_potree/clouds/agua-blanca/ortho_tiles/{z}/{x}/{y}.png', {
-        tms: true, minZoom: 16, maxNativeZoom: 21, maxZoom: 23,
-        bounds: bounds, noWrap: true, errorTileUrl: BLANK
+
+      // ── (1) Basemap satélite (Esri World Imagery · sin API key) · contexto fuera del recorte ──
+      // maxNativeZoom 17: Esri carece de imagery >z17 en esta zona rural (devuelve tiles
+      // "Map data not yet available"); Leaflet sobre-escala z17 para el acercamiento.
+      const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 23, maxNativeZoom: 17, noWrap: true
       }).addTo(lmap);
-      lmap.fitBounds(bounds);
+
+      // ── Datos vectoriales pre-reproyectados a WGS84 (build: scripts/*.py) ──
+      //   predio.geojson      = deslinde real (digitalizado del plano T101 · lindero este curvo)
+      //   ortho_clip.geojson  = extensión del ortho BUENO (recorta esquinas sin dato + franja borrosa)
+      //   contours-wgs84      = curvas (misma contours.json que la vista Puntos) clipadas al predio
+      let predio = null, contours = null, orthoClip = null;
+      try {
+        const [p, c, o] = await Promise.all([
+          fetch(C + 'predio.geojson').then(r => r.ok ? r.json() : null),
+          fetch(C + 'contours-wgs84.geojson').then(r => r.ok ? r.json() : null),
+          fetch(C + 'ortho_clip.geojson').then(r => r.ok ? r.json() : null)
+        ]);
+        predio = p; contours = c; orthoClip = o;
+      } catch (e) { console.warn('[map] geojson no disponible', e); }
+
+      // Tile transparente 1px para huecos del borde → sin ícono de imagen rota.
+      const BLANK = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+      // ── (2) Ortomosaico Pix4D (pirámide TMS z16-21 ≈ 7 cm/px) · recortado a la extensión buena ──
+      // BoundaryCanvas clipa los tiles a ortho_clip → muestra TODO el ortho nítido (más que el
+      // predio) y deja fuera las esquinas sin dato + la franja borrosa; el satélite llena el resto.
+      const orthoUrl = C + 'ortho_tiles/{z}/{x}/{y}.png';
+      const orthoOpts = { tms: true, minZoom: 16, maxNativeZoom: 21, maxZoom: 23, bounds: flightBounds, noWrap: true, errorTileUrl: BLANK };
+      const clipBoundary = orthoClip || predio; // fallback al predio si no hay clip de ortho
+      let ortho;
+      if (clipBoundary && L.TileLayer && L.TileLayer.boundaryCanvas) {
+        ortho = L.TileLayer.boundaryCanvas(orthoUrl, Object.assign({ boundary: clipBoundary }, orthoOpts));
+      } else {
+        ortho = L.tileLayer(orthoUrl, orthoOpts); // fallback: ortho completo sin recorte
+      }
+      ortho.addTo(lmap);
+
+      // ── (3) Curvas de nivel (paso 1 m · índice cada 5 m con etiqueta de cota) ──
+      const curvas = L.layerGroup();
+      if (contours) {
+        L.geoJSON(contours, {
+          style: f => f.properties && f.properties.index
+            ? { color: '#A7E84F', weight: 1.4, opacity: 0.92 }
+            : { color: '#7BC142', weight: 0.6, opacity: 0.55 }
+        }).addTo(curvas);
+        const labelled = new Set(); // una etiqueta por cota (evita repetir en segmentos partidos)
+        contours.features.filter(f => f.properties && f.properties.index).forEach(f => {
+          const elev = Math.round(f.properties.elev);
+          if (labelled.has(elev)) return; labelled.add(elev);
+          const cs = f.geometry.coordinates; if (!cs || !cs.length) return;
+          const m = cs[Math.floor(cs.length / 2)];
+          L.marker([m[1], m[0]], {
+            interactive: false, keyboard: false,
+            icon: L.divIcon({ className: 'contour-label', html: elev + ' m', iconSize: [38, 12] })
+          }).addTo(curvas);
+        });
+      }
+      curvas.addTo(lmap);
+
+      // ── (4) Deslinde del predio (polígono T101 digitalizado · superficie · UTM/ITRF08) ──
+      const prProps = (predio && predio.features && predio.features[0] && predio.features[0].properties) || {};
+      const haTxt = prProps.area_ha != null ? (+prProps.area_ha).toFixed(2) + ' ha' : '~1 ha';
+      const deslinde = L.layerGroup();
+      let predioBounds = null;
+      if (predio) {
+        const gj = L.geoJSON(predio, { style: { color: '#D8FF6B', weight: 2.6, opacity: 0.96, fill: true, fillColor: '#7BC142', fillOpacity: 0.05 } }).addTo(deslinde);
+        predioBounds = gj.getBounds();
+        gj.bindPopup('<b>Predio Agua Blanca</b><br>' + haTxt + ' · ' + (prProps.vertices || '') + ' vértices<br>UTM 14N · ITRF08 · fuente T101');
+        L.marker(predioBounds.getCenter(), {
+          interactive: false, keyboard: false,
+          icon: L.divIcon({ className: 'predio-label', html: 'Deslinde · ' + haTxt, iconSize: [122, 18] })
+        }).addTo(deslinde);
+      }
+      deslinde.addTo(lmap);
+
+      // ── Controles · escala · capas · leyenda+ficha ──
+      L.control.scale({ metric: true, imperial: false, position: 'bottomleft', maxWidth: 160 }).addTo(lmap);
+      L.control.layers(
+        { 'Satélite (Esri)': sat },
+        { 'Ortomosaico': ortho, 'Curvas de nivel': curvas, 'Deslinde': deslinde },
+        { collapsed: false, position: 'topright' }
+      ).addTo(lmap);
+
+      const legend = L.control({ position: 'bottomright' });
+      legend.onAdd = function () {
+        const d = L.DomUtil.create('div', 'map-legend');
+        d.innerHTML =
+          '<h4>Mapa topográfico</h4>' +
+          '<div class="row"><span class="sw line" style="border-color:#A7E84F"></span>Curva índice (5 m)</div>' +
+          '<div class="row"><span class="sw line" style="border-color:#7BC142"></span>Curva intermedia (1 m)</div>' +
+          '<div class="row"><span class="sw line" style="border-color:#D8FF6B"></span>Deslinde · ' + haTxt + '</div>' +
+          '<div class="row"><span class="sw box" style="background:#6f7d4e"></span>Ortomosaico (~7 cm/px)</div>' +
+          '<div class="ficha"><b>Levantamiento fotogramétrico</b><br>Agua Blanca, Hgo · vuelo ago 2024<br>UTM 14N · ITRF08 · GSD ~7 cm/px<br>Curvas @1 m · Sup. ' + haTxt + '<br>Esri · Pix4D · Drone Mapping</div>';
+        L.DomEvent.disableClickPropagation(d);
+        return d;
+      };
+      legend.addTo(lmap);
+
+      // Encuadre: a la extensión del ortho bueno (muestra más que el predio) con margen satelital
+      const frame = orthoClip ? L.geoJSON(orthoClip).getBounds() : (predioBounds || flightBounds);
+      lmap.fitBounds(frame.pad ? frame.pad(0.12) : frame);
     }
 
     async function setView(v) {
