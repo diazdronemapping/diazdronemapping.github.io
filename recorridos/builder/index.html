@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recorridos · Studio</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='14' height='14' rx='3' fill='%237BC142'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../viewer/vendor/psv/core.css">
+<link rel="stylesheet" href="../viewer/vendor/psv/markers-plugin.css">
+<link rel="stylesheet" href="./css/builder.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "../viewer/vendor/three/three.module.min.js",
+    "@photo-sphere-viewer/core": "../viewer/vendor/psv/core.module.js",
+    "@photo-sphere-viewer/markers-plugin": "../viewer/vendor/psv/markers-plugin.module.js",
+    "@photo-sphere-viewer/virtual-tour-plugin": "../viewer/vendor/psv/virtual-tour-plugin.module.js",
+    "@photo-sphere-viewer/autorotate-plugin": "../viewer/vendor/psv/autorotate-plugin.module.js",
+    "@photo-sphere-viewer/gyroscope-plugin": "../viewer/vendor/psv/gyroscope-plugin.module.js"
+  }
+}
+</script>
+</head>
+<body data-mode="navigate">
+
+<!-- Barra superior -->
+<header class="topbar">
+  <div class="topbar__brand">
+    <span class="topbar__logo">▦</span>
+    <div>
+      <div class="topbar__title">Recorridos · <b>Studio</b></div>
+      <div class="topbar__project"><span id="project-name">—</span> <span id="store-label" class="topbar__store"></span></div>
+    </div>
+  </div>
+  <div class="topbar__actions" id="topbar-actions" hidden>
+    <button id="btn-preview" class="btn btn--ghost">▶ Previsualizar</button>
+    <button id="btn-save" class="btn btn--primary">Guardar</button>
+  </div>
+</header>
+
+<!-- Pantalla de inicio -->
+<section id="start-screen" class="start" hidden>
+  <div class="start__card">
+    <h1>Recorridos · Studio</h1>
+    <p>Arma tus recorridos virtuales: sube panoramas 360, coloca los puntos, dibuja el terreno y guarda. El recorrido queda listo para publicar.</p>
+    <div class="start__buttons">
+      <button id="btn-new" class="btn btn--primary btn--lg">＋ Nuevo recorrido</button>
+      <button id="btn-open" class="btn btn--ghost btn--lg">📂 Abrir recorrido</button>
+    </div>
+    <p id="start-unsupported" class="start__warn" hidden>
+      ⚠ Tu navegador no permite abrir carpetas. Usa <b>Chrome</b> o <b>Edge</b> de escritorio.
+    </p>
+  </div>
+</section>
+
+<!-- Espacio de trabajo -->
+<main id="workspace" class="workspace" hidden>
+
+  <!-- Panel izquierdo: escenas -->
+  <aside class="panel panel--scenes">
+    <div class="panel__head">Escenas</div>
+    <div id="scene-list" class="scene-list"></div>
+    <div class="panel__foot">
+      <button id="btn-add-360" class="btn btn--primary btn--block">＋ Agregar panorama 360</button>
+      <details class="add-more">
+        <summary>Otros tipos de escena</summary>
+        <button class="btn btn--mini" data-add="potree">Nube de puntos</button>
+        <button class="btn btn--mini" data-add="ortho">Mapa / ortofoto</button>
+        <button class="btn btn--mini" data-add="splat">Escena 3D (splat)</button>
+      </details>
+    </div>
+  </aside>
+
+  <!-- Centro: escenario -->
+  <section class="stage">
+    <div id="stage-tools" class="stage-tools" hidden></div>
+    <div class="stage__host" id="stage-host-wrap">
+      <div id="stage-host" class="stage__engines"></div>
+      <div id="stage-potree" class="stage__engines" hidden></div>
+      <div id="stage-empty" class="stage__empty">
+        <p>Selecciona una escena o agrega tu primer panorama 360.</p>
+      </div>
+      <div id="stage-nonpano" class="stage__nonpano" hidden>
+        Esta escena se edita en el panel derecho ›
+      </div>
+    </div>
+  </section>
+
+  <!-- Panel derecho: inspector -->
+  <aside class="panel panel--inspector">
+    <div id="inspector" class="inspector"></div>
+  </aside>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+<input type="file" id="file-360" accept="image/jpeg,image/png,image/webp" hidden>
+
+<script type="module">
+  import { BuilderApp } from './js/studio.js';
+  const app = new BuilderApp();
+  app.boot();
+
+  // ingesta de panos
+  const fileInput = document.getElementById('file-360');
+  document.getElementById('btn-add-360').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) app.ingestPano(fileInput.files[0]);
+    fileInput.value = '';
+  });
+  document.querySelectorAll('[data-add]').forEach(b =>
+    b.addEventListener('click', () => app.addScene(b.dataset.add)));
+
+  document.getElementById('btn-save').addEventListener('click', () => app.save());
+  document.getElementById('btn-preview').addEventListener('click', () => app.preview());
+
+  // mostrar acciones cuando hay proyecto
+  const obs = new MutationObserver(() => {
+    document.getElementById('topbar-actions').hidden = document.getElementById('workspace').hidden;
+  });
+  obs.observe(document.getElementById('workspace'), { attributes: true, attributeFilter: ['hidden'] });
+
+  window.addEventListener('beforeunload', e => { if (app.dirty) { e.preventDefault(); e.returnValue = ''; } });
+</script>
+</body>
+</html>

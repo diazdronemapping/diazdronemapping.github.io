@@ -93,7 +93,7 @@ export function create(ctx, container) {
         [MarkersPlugin, {}],
         [AutorotatePlugin, {
           autostartDelay: (ctx.manifest.idle?.autorotateAfter ?? 12) * 1000,
-          autostartOnIdle: true,
+          autostartOnIdle: !ctx.editMode, // en el Studio no rota solo (estorba al editar)
           autorotateSpeed: `${ctx.manifest.idle?.rpm ?? 0.4}rpm`,
         }],
         [GyroscopePlugin, { touchmove: true }],
@@ -106,6 +106,12 @@ export function create(ctx, container) {
     currentFov = view.fov ?? 70;
 
     markers.addEventListener('select-marker', ({ marker }) => {
+      // Modo edición (Studio): seleccionar un hotspot lo abre en el inspector
+      // en vez de ejecutar su acción. El nadir (__*) no es hotspot editable.
+      if (ctx.editMode) {
+        if (!marker.id.startsWith('__')) ctx.emit('hotspot-select', marker.id);
+        return;
+      }
       const d = marker.data || {};
       if (d.kind === 'nav' && d.target) ctx.goTo(d.target);
       else if (d.kind === 'info' && d.content) ctx.emit('info', d.content);
@@ -180,6 +186,23 @@ export function create(ctx, container) {
       if (!viewer) return null;
       const p = viewer.getPosition();
       return { yaw: radToDeg(p.yaw), pitch: radToDeg(p.pitch), fov: currentFov };
+    },
+
+    // Studio: reconstruye los markers de la escena SIN recargar el pano ni
+    // mover la cámara (tras agregar/mover/borrar un hotspot).
+    refresh(scene) {
+      if (!viewer || !markers) return;
+      markers.clearMarkers();
+      markers.setMarkers(buildMarkers(scene));
+    },
+
+    // Studio: resalta el hotspot seleccionado.
+    highlight(hotspotId) {
+      if (!markers) return;
+      for (const m of Object.values(markers.markers || {})) {
+        const el = m.domElement || m.element;
+        if (el && el.classList) el.classList.toggle('is-selected', m.id === hotspotId);
+      }
     },
 
     async animateTo(lookAtDeg, { speed = '6rpm' } = {}) {

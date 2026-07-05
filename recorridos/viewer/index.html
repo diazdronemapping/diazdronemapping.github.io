@@ -86,8 +86,11 @@
 
   const params = new URLSearchParams(location.search);
   const tourId = params.get('tour') || 'santa-maria';
+  // ?manifest=<url> permite previsualizar cualquier tour (lo usa el Studio);
+  // por defecto se resuelve por slug bajo ../tours/.
+  const tourUrl = params.get('manifest') || `../tours/${tourId}/manifest.json`;
   const controller = new TourController({
-    tourUrl: `../tours/${tourId}/manifest.json`,
+    tourUrl,
     debug: params.get('debug') === '1',
   });
   window.tour = controller; // consola + debug

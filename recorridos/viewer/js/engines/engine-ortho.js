@@ -35,7 +35,11 @@ function markerHtml(kind, label) {
          (label ? `<span class="rc-hotspot__label">${label}</span>` : '') + `</div>`;
 }
 
-/* ---------- carga única del vendor (paths relativos a viewer/index.html) ---------- */
+/* ---------- carga única del vendor ----------
+   Rutas resueltas desde import.meta.url (NO desde el documento) para que el
+   motor funcione igual embebido en el viewer o en el Studio (builder). */
+const VENDOR = new URL('../../vendor/', import.meta.url).href;
+const OWN_CSS = new URL('../../css/engine-ortho.css', import.meta.url).href;
 
 function loadCss(href) {
   return new Promise(resolve => {
@@ -65,12 +69,12 @@ function ensureLeaflet() {
   if (!vendorReady) {
     vendorReady = (async () => {
       const css = Promise.all([
-        loadCss('./vendor/leaflet/leaflet.css'),
-        loadCss('./css/engine-ortho.css'),
+        loadCss(VENDOR + 'leaflet/leaflet.css'),
+        loadCss(OWN_CSS),
       ]);
-      if (!window.L) await loadScript('./vendor/leaflet/leaflet.js');
+      if (!window.L) await loadScript(VENDOR + 'leaflet/leaflet.js');
       if (!window.L?.TileLayer?.BoundaryCanvas) {
-        try { await loadScript('./vendor/leaflet/BoundaryCanvas.js'); }
+        try { await loadScript(VENDOR + 'leaflet/BoundaryCanvas.js'); }
         catch (e) { console.warn('[ortho] BoundaryCanvas no disponible — ortho sin recorte:', e); }
       }
       await css;
