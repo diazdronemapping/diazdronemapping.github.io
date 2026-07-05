@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nube de puntos · Recorridos · Drone Mapping MX</title>
+
+  <script>
+  /* Registrar SW que sirve octree.bin desde chunks <100MB (GitHub Pages).
+     Reload-once para que el SW controle antes del primer fetch del octree.
+     GUARD: solo si /sw-octree.js EXISTE (fetch OK). En local (server plano
+     sirviendo la raíz del repo) no hay SW → skip silencioso, sin reloads. */
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
+    fetch('/sw-octree.js', { method: 'HEAD' }).then(function (res) {
+      if (!res || !res.ok) {
+        console.info('[potree-scene] sin /sw-octree.js — carga HTTP directa (local)');
+        return;
+      }
+      return navigator.serviceWorker.register('/sw-octree.js').then(function () {
+        return navigator.serviceWorker.ready;
+      }).then(function () {
+        if (!navigator.serviceWorker.controller && !sessionStorage.getItem('swOctreeReloaded')) {
+          sessionStorage.setItem('swOctreeReloaded', '1');
+          location.reload();
+        }
+      });
+    }).catch(function (e) {
+      console.info('[potree-scene] SW octree no disponible:', e && e.message);
+    });
+  })();
+  </script>
+
+  <!-- Potree CSS -->
+  <link rel="stylesheet" type="text/css" href="/assets/_potree/build/potree/potree.css" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #0F0F0F;
+      overflow: hidden;
+      /* En móvil: el gesto táctil debe ir a los controles de Potree (rotar/zoom/pan),
+         NO al scroll de la página ni del viewer que embebe este iframe. */
+      touch-action: none;
+      overscroll-behavior: none;
+    }
+    #potree_render_area {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0; left: 0;
+      touch-action: none;
+    }
+    /* El canvas que crea Potree dentro del render area también cede el gesto */
+    #potree_render_area canvas { touch-action: none; display: block; }
+    /* Hide sidebar completely — clean iframe embed */
+    #sidebar_root,
+    #potree_sidebar_toggle,
+    #potree_map_toggle,
+    .potree_sidebar_brand { display: none !important; }
+
+    /* Minimal overlay label */
+    #overlay-label {
+      position: absolute;
+      bottom: 10px; left: 12px;
+      font-family: 'Space Grotesk', monospace, sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(123, 193, 66, 0.75);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Loading indicator */
+    #loading-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #0F0F0F;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 20;
+      transition: opacity 0.6s ease;
+    }
+    #loading-overlay.hidden { opacity: 0; pointer-events: none; }
+    #loading-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(123,193,66,0.15);
+      border-top-color: rgba(123,193,66,0.8);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-text {
+      font-family: monospace;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* Mini-toolbar de medición · botones flotantes */
+    /* Embebida en Recorridos (controls=external): la UI baja para librar el
+       chrome del padre (barra superior ~60px). */
+    body.embedded-chrome #measure-toolbar { top: 64px; }
+    body.embedded-chrome #color-toggle { top: 64px; }
+    body.embedded-chrome #density-control { top: 108px; }
+
+    #measure-toolbar {
+      position: absolute;
+      top: 12px; left: 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      z-index: 30;
+      max-width: calc(100% - 24px);
+    }
+    #measure-toolbar button {
+      font-family: 'Space Grotesk', monospace, sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.85);
+      background: rgba(15,15,15,0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(123,193,66,0.35);
+      border-radius: 999px;
+      padding: 6px 11px;
+      cursor: pointer;
+      transition: background 0.18s, border-color 0.18s;
+    }
+    #measure-toolbar button:hover {
+      background: rgba(123,193,66,0.18);
+      border-color: rgba(123,193,66,0.7);
+    }
+    #measure-toolbar button.active {
+      background: rgba(123,193,66,0.32);
+      border-color: rgba(123,193,66,0.85);
+      color: #fff;
+    }
+    #measure-toolbar button.clear {
+      border-color: rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.55);
+    }
+    #measure-toolbar button.clear:hover {
+      background: rgba(255,80,80,0.15);
+      border-color: rgba(255,120,120,0.5);
+      color: #fff;
+    }
+    #measure-toolbar button { white-space: nowrap; }
+    #measure-toolbar .ti { margin-right: 5px; }       /* glifo */
+    #measure-toolbar .tl { /* etiqueta · se oculta en móvil */ }
+
+    /* Selector de color (RGB / clasificación / elevación) */
+    #color-toggle {
+      position: absolute;
+      top: 12px; right: 12px;
+      display: flex;
+      gap: 4px;
+      z-index: 30;
+      background: rgba(15,15,15,0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px;
+      padding: 3px;
+    }
+    #color-toggle button {
+      font-family: 'Space Grotesk', monospace, sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      background: transparent;
+      border: 0;
+      border-radius: 999px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+    }
+    #color-toggle button.active {
+      background: rgba(123,193,66,0.35);
+      color: #fff;
+    }
+    #color-toggle button[hidden] { display: none; }
+
+    /* Control de densidad de puntos · point budget */
+    #density-control {
+      position: absolute;
+      top: 56px; right: 12px;
+      z-index: 30;
+      background: rgba(15,15,15,0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 230px;
+    }
+    #density-control label {
+      font-family: 'Space Grotesk', monospace, sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+    }
+    #density-control .row { display: flex; align-items: center; gap: 8px; }
+    #density-control input[type=range] {
+      flex: 1;
+      accent-color: #7BC142;
+      height: 4px;
+      cursor: pointer;
+    }
+    #density-control .value {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 11px;
+      color: rgba(255,255,255,0.88);
+      min-width: 56px;
+      text-align: right;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Leyenda de elevación · horizontal · solo visible en modo 'elevation' */
+    #elevation-legend {
+      position: absolute;
+      bottom: 12px; right: 12px;
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      gap: 7px;
+      background: rgba(15,15,15,0.40);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 9px 12px 11px;
+      width: 280px;
+      font-family: 'Space Grotesk', monospace;
+    }
+    #elevation-legend.visible { display: flex; }
+    #elevation-legend .title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 9.5px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+    #elevation-legend .title .unit {
+      color: rgba(123,193,66,0.82);
+      letter-spacing: 0.06em;
+      text-transform: none;
+      font-size: 10px;
+    }
+    #elevation-legend .bar-wrap {
+      position: relative;
+      height: 14px;
+      border-radius: 3px;
+      /* Rampa SPECTRAL · ColorBrewer Spectral-9 (idéntica al default de Potree) */
+      background: linear-gradient(to right,
+        #5e4fa2 0%,
+        #3288bd 12.5%,
+        #66c2a5 25%,
+        #abdda4 37.5%,
+        #e6f598 50%,
+        #fee08b 62.5%,
+        #fdae61 75%,
+        #f46d43 87.5%,
+        #d53e4f 100%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16);
+    }
+    #elevation-legend .bar-wrap .tick {
+      position: absolute;
+      top: -3px;
+      bottom: -3px;
+      width: 1px;
+      background: rgba(255,255,255,0.55);
+    }
+    #elevation-legend .labels {
+      position: relative;
+      height: 14px;
+      font-size: 9.5px;
+      color: rgba(255,255,255,0.82);
+      letter-spacing: 0.02em;
+    }
+    #elevation-legend .labels span {
+      position: absolute;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      line-height: 14px;
+    }
+    #elevation-legend .labels span.edge-left  { transform: translateX(0); }
+    #elevation-legend .labels span.edge-right { transform: translateX(-100%); }
+    #elevation-legend .labels b { color: rgba(255,255,255,0.96); font-weight: 600; }
+
+    /* Stack de cards de medición · bottom-left · una card por medición (apiladas) */
+    #measure-stack {
+      position: absolute;
+      bottom: 12px; left: 12px;
+      z-index: 31;
+      display: flex;
+      flex-direction: column;       /* primera arriba · última (más nueva) abajo, junto al ancla */
+      gap: 8px;
+      max-height: calc(100% - 76px);
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    #measure-stack::-webkit-scrollbar { width: 5px; }
+    #measure-stack::-webkit-scrollbar-thumb { background: rgba(123,193,66,0.30); border-radius: 3px; }
+    .mi-card {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 256px;
+      background: rgba(15,15,15,0.40);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border: 1px solid rgba(123,193,66,0.30);
+      border-radius: 10px;
+      padding: 11px 13px 12px;
+      font-family: 'Space Grotesk', monospace;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+      animation: mi-in 0.18s ease;
+    }
+    @keyframes mi-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .mi-card .mi-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .mi-card .mi-type {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(123,193,66,0.92);
+    }
+    .mi-card .mi-type .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #7BC142;
+      box-shadow: 0 0 8px rgba(123,193,66,0.8);
+      flex-shrink: 0;
+    }
+    .mi-card .mi-close {
+      background: transparent;
+      border: 0;
+      color: rgba(255,255,255,0.5);
+      font-size: 15px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 5px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .mi-card .mi-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    /* Métrica primaria destacada */
+    .mi-card .mi-primary {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+    .mi-card .mi-primary .val {
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.01em;
+      line-height: 1;
+    }
+    .mi-card .mi-primary .unit {
+      font-size: 12px;
+      color: rgba(123,193,66,0.85);
+      letter-spacing: 0.04em;
+    }
+    /* Filas label / valor */
+    .mi-card .mi-rows { display: flex; flex-direction: column; gap: 3px; }
+    .mi-card .mi-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 11px;
+    }
+    .mi-card .mi-row .k {
+      color: rgba(255,255,255,0.52);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .mi-card .mi-row .v {
+      color: rgba(255,255,255,0.92);
+      text-align: right;
+      letter-spacing: 0.02em;
+    }
+    .mi-card .mi-row .v b { color: #fff; font-weight: 600; }
+    /* Lista de tramos · scrollable compacta */
+    .mi-card .mi-segs {
+      margin-top: 1px;
+      max-height: 96px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .mi-card .mi-segs .seg {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.62);
+    }
+    .mi-card .mi-segs .seg .v { color: rgba(255,255,255,0.85); }
+    .mi-card .mi-segs::-webkit-scrollbar { width: 5px; }
+    .mi-card .mi-segs::-webkit-scrollbar-thumb {
+      background: rgba(123,193,66,0.35); border-radius: 3px;
+    }
+    /* Ocultar el branding label mientras hay cards visibles (evita solape bottom-left) */
+    body.measure-open #overlay-label { opacity: 0; transition: opacity 0.2s; }
+
+    /* ──────────────────────────────────────────────────────────────────
+       Móvil (≤600px) · reacomodo de overlays para que NO se enciman.
+       Cluster superior compacto: toolbar (solo íconos · 1 fila) arriba-izq +
+       densidad arriba-der · selector de color en 2ª fila. Cluster inferior:
+       leyenda full-width abajo · cards de medición elevadas sobre la leyenda
+       cuando el modo elevación está activo.
+       ────────────────────────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      /* Toolbar de medición · solo íconos · una sola fila · arriba-izquierda */
+      #measure-toolbar {
+        top: 10px; left: 10px; right: auto;
+        flex-wrap: nowrap;
+        gap: 5px;
+        max-width: calc(100% - 190px);   /* deja sitio a la densidad a la derecha */
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      #measure-toolbar::-webkit-scrollbar { display: none; }
+      #measure-toolbar button { padding: 7px 10px; }
+      #measure-toolbar .ti { margin-right: 0; font-size: 13px; }
+      #measure-toolbar .tl { display: none; }          /* icon-only en móvil */
+
+      /* Densidad · arriba-derecha · compacta */
+      #density-control {
+        top: 10px; right: 10px; left: auto;
+        width: 165px;
+        padding: 7px 10px;
+      }
+
+      /* Selector de color · 2ª fila · arriba-izquierda (no comparte fila con la toolbar) */
+      #color-toggle { top: 64px; right: auto; left: 10px; }
+
+      /* Leyenda de elevación · barra full-width abajo */
+      #elevation-legend {
+        left: 10px; right: 10px; bottom: 10px;
+        width: auto;
+        padding: 7px 12px 9px;
+      }
+      #elevation-legend .labels span:not(.edge-left):not(.edge-right):not(.mid) { display: none; }
+
+      /* Cards de medición · abajo-izq · se elevan sobre la leyenda en modo elevación */
+      #measure-stack {
+        left: 10px; right: auto; bottom: 12px;
+        max-height: calc(100% - 150px);
+      }
+      body.elevation-on #measure-stack { bottom: 94px; }  /* sobre la leyenda full-width (≈72px alto) */
+      .mi-card { width: min(220px, calc(100vw - 20px)); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay">
+    <div id="loading-spinner"></div>
+    <div id="loading-text">Cargando nube de puntos…</div>
+  </div>
+
+  <!-- Potree render target -->
+  <div id="potree_render_area"></div>
+
+  <!-- Mini-toolbar de medición · habilita las herramientas reales de Potree -->
+  <div id="measure-toolbar">
+    <button data-tool="distance" title="Medir distancia"><span class="ti">↔</span><span class="tl">Distancia</span></button>
+    <button data-tool="area"     title="Medir área"><span class="ti">▱</span><span class="tl">Área</span></button>
+    <button data-tool="height"   title="Medir altura"><span class="ti">↕</span><span class="tl">Altura</span></button>
+    <button data-tool="point"    title="Marcar punto"><span class="ti">·</span><span class="tl">Punto</span></button>
+    <button data-tool="clear" class="clear" title="Borrar medidas"><span class="ti">✕</span><span class="tl">Limpiar</span></button>
+  </div>
+
+  <!-- Selector de coloreado · RGB por default · Clasif. solo si la nube trae classification -->
+  <div id="color-toggle">
+    <button data-color="rgba" class="active" id="btn-color-rgb">RGB</button>
+    <button data-color="classification" id="btn-color-clasif" hidden>Clasif.</button>
+    <button data-color="elevation">Elevación</button>
+  </div>
+
+  <!-- Densidad de puntos · point budget slider -->
+  <div id="density-control">
+    <label>Densidad de puntos</label>
+    <div class="row">
+      <input type="range" id="density-slider" min="500000" max="8000000" step="500000" value="1500000" />
+      <span class="value" id="density-value">1.5 M</span>
+    </div>
+  </div>
+
+  <!-- Leyenda de elevación · solo visible cuando el coloreado activo es 'elevation' -->
+  <div id="elevation-legend" aria-hidden="true">
+    <div class="title">
+      <span>Elevación</span>
+      <span class="unit">m s.n.m.</span>
+    </div>
+    <div class="bar-wrap" role="img" aria-label="Rampa de elevación SPECTRAL">
+      <span class="tick" style="left:0%"></span>
+      <span class="tick" style="left:25%"></span>
+      <span class="tick" style="left:50%"></span>
+      <span class="tick" style="left:75%"></span>
+      <span class="tick" style="left:100%"></span>
+    </div>
+    <div class="labels">
+      <span class="edge-left" id="ele-t0" style="left:0%">— m</span>
+      <span id="ele-t1" style="left:25%">—</span>
+      <span class="mid" id="ele-t2" style="left:50%"><b>—</b></span>
+      <span id="ele-t3" style="left:75%">—</span>
+      <span class="edge-right" id="ele-t4" style="left:100%">— m</span>
+    </div>
+  </div>
+
+  <!-- Stack de cards de medición · bottom-left · una card por medición (se crean en JS) -->
+  <div id="measure-stack" aria-live="polite"></div>
+
+  <!-- Overlay branding -->
+  <div id="overlay-label">Nube de puntos · Drone Mapping MX</div>
+
+  <!-- ── Dependencies (order matters for Potree 1.8) ──
+       SIN laslaz.js: la nube es formato Potree 2.0 puro (octree.bin + hierarchy.bin),
+       no hay nodos .laz que decodificar. -->
+
+  <!-- BinaryHeap — required internally by Potree's priority queue -->
+  <script src="/assets/_potree/libs/other/BinaryHeap.js"></script>
+
+  <!-- jQuery -->
+  <script src="/assets/_potree/libs/jquery/jquery-3.1.1.min.js"></script>
+
+  <!-- Proj4 (coordinate transforms) -->
+  <script src="/assets/_potree/libs/proj4/proj4.js"></script>
+
+  <!-- Tween (camera animations) -->
+  <script src="/assets/_potree/libs/tween/tween.min.js"></script>
+
+  <!-- ── Potree 1.8 core ── -->
+  <script src="/assets/_potree/build/potree/potree.js"></script>
+
+  <script>
+    window.addEventListener('load', function () {
+
+      // ── Parámetros de URL ────────────────────────────────────────────────
+      //   ?cloud=<path metadata.json>  · WHITELIST: solo /assets/_potree/clouds/
+      //   ?budget=<int>                · pointBudget inicial (default 1.5M)
+      //   ?controls=external           · compat: señala que un padre orquesta por
+      //                                  postMessage. En v2 el canal de comandos
+      //                                  está SIEMPRE activo y la UI in-viewer
+      //                                  permanece visible (el viewer Recorridos
+      //                                  no duplica controles encima del iframe).
+      const params = new URLSearchParams(location.search);
+      const CLOUD_PREFIX  = '/assets/_potree/clouds/';
+      const DEFAULT_CLOUD = '/assets/_potree/clouds/agua-blanca-veg/metadata.json';
+      let cloudPath = params.get('cloud') || DEFAULT_CLOUD;
+      if (!cloudPath.startsWith(CLOUD_PREFIX)) {
+        console.warn('[potree-scene] cloud fuera de whitelist (' + cloudPath + ') → default ' + DEFAULT_CLOUD);
+        cloudPath = DEFAULT_CLOUD;
+      }
+      let initialBudget = parseInt(params.get('budget'), 10);
+      if (!Number.isFinite(initialBudget) || initialBudget <= 0) initialBudget = 1500000;
+      initialBudget = Math.max(100000, Math.min(10000000, initialBudget));
+      const cloudName = (cloudPath.split('/')[4] || 'nube');
+
+      // ── Viewer init ──────────────────────────────────────────────────────
+      const viewer = new Potree.Viewer(
+        document.getElementById('potree_render_area')
+      );
+
+      viewer.setEDLEnabled(true);
+      viewer.setEDLRadius(1.4);
+      // EDL (eye-dome lighting) sombrea por diferencias de profundidad → oscurece
+      // la nube en ciertas perspectivas. Intensidad baja = más brillosa/uniforme.
+      viewer.setEDLStrength(0.4);
+      viewer.setFOV(60);
+      viewer.setPointBudget(initialBudget);
+      viewer.setBackground('black');
+
+      // Controles:
+      // · Escritorio (mouse) → earthControls = navegación tipo Google Earth.
+      // · Táctil (móvil/tablet) → earthControls queda como base INACTIVA y un
+      //   controlador táctil PROPIO estilo mapa maneja el gesto (1 dedo = mover ·
+      //   2 dedos = zoom + yaw + tilt). earthControls no responde al tacto de
+      //   1 dedo (su drag aborta en `if(!this.pivot)return`).
+      var isTouch = window.matchMedia('(pointer: coarse)').matches;
+      var measuringActive = false;   // suspende la nav táctil mientras se mide
+      var externalControls = params.get('controls') === 'external';   // compat v1
+      // Embebida en el viewer Recorridos: bajar la UI propia para no chocar
+      // con el chrome del padre (logo/título arriba).
+      if (externalControls) document.body.classList.add('embedded-chrome');
+
+      viewer.setControls(viewer.earthControls);
+      window._potreeViewer = viewer;
+
+      // ── Acercarse MUCHO más: bajar el near plane ─────────────────────────
+      // Potree fija el near del camera = lowestSpacing*10 (ver Viewer.update). Eso
+      // deja el near MAYOR que el radius al hacer zoom → recorta la superficie que
+      // miras. Setter quirúrgico: deja el near de Potree tal cual salvo cuando
+      // supera el 60% del radius (zoom muy cercano), donde lo capa.
+      (function patchNearPlane(camP) {
+        var _n = camP.near;
+        Object.defineProperty(camP, 'near', {
+          configurable: true,
+          get: function () { return _n; },
+          set: function (v) {
+            var r = (viewer.scene && viewer.scene.view && viewer.scene.view.radius) || v;
+            _n = Math.max(0.02, Math.min(v, r * 0.6));
+          }
+        });
+      })(viewer.scene.cameraP);
+
+      if (isTouch) setupMapTouchNav(viewer, function () { return measuringActive; });
+
+      // ══ Protocolo postMessage v2 (ver docs/protocolo-potree.md) ═══════════
+      // IFRAME → PADRE: source 'potree-state' · ready / view / tool
+      // PADRE → IFRAME: source 'potree-ctrl'  · setView / getView / setBudget /
+      //                 tool / stoptool / clear (+ extensiones color, density)
+      function post(msg) {
+        try { parent.postMessage(Object.assign({ source: 'potree-state' }, msg), '*'); }
+        catch (e) { /* sin padre (standalone) — noop */ }
+      }
+
+      function currentView() {
+        var v = viewer.scene.view;
+        var pivot = v.getPivot();
+        return {
+          position: [v.position.x, v.position.y, v.position.z],
+          target:   [pivot.x, pivot.y, pivot.z]
+        };
+      }
+
+      // setView externo cancela los re-encuadres fallback (no pisar al padre)
+      var externalViewSet = false;
+      function applyExternalView(pos, tgt) {
+        if (!Array.isArray(pos) || pos.length !== 3 || !Array.isArray(tgt) || tgt.length !== 3) return;
+        externalViewSet = true;
+        var view = viewer.scene.view;
+        view.position.set(pos[0], pos[1], pos[2]);
+        // THREE no es global en Potree 1.8 (vive dentro del IIFE) → forma 3-args
+        view.lookAt(tgt[0], tgt[1], tgt[2]);
+      }
+
+      // Emisión espontánea de vista · throttled ≤2/s · solo tras 'ready' y solo
+      // si la cámara realmente cambió (firma redondeada a cm).
+      var readySent = false;
+      var lastViewMsgAt = 0, lastViewSig = '';
+      viewer.addEventListener('update', function () {
+        if (!readySent) return;
+        var now = performance.now();
+        if (now - lastViewMsgAt < 500) return;
+        var cv = currentView();
+        var sig = cv.position.map(function (n) { return n.toFixed(2); }).join(',') + '|' +
+                  cv.target.map(function (n) { return n.toFixed(2); }).join(',');
+        if (sig === lastViewSig) return;
+        lastViewSig = sig;
+        lastViewMsgAt = now;
+        post({ action: 'view', position: cv.position, target: cv.target });
+      });
+
+      // APIs que se conectan cuando la nube cargó (los comandos que llegan antes
+      // de tener pointcloud se ignoran sin romper — el padre espera 'ready').
+      var toolApi = null, colorApi = null;
+
+      window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (!d || d.source !== 'potree-ctrl') return;
+        switch (d.action) {
+          case 'setView':   applyExternalView(d.position, d.target); break;
+          case 'getView': {
+            var cv = currentView();
+            post({ action: 'view', position: cv.position, target: cv.target });
+            break;
+          }
+          case 'setBudget': applyDensity(d.value); break;
+          case 'tool':      if (toolApi) toolApi.activate(d.tool); break;
+          case 'stoptool':  if (toolApi) toolApi.stop(); break;
+          case 'clear':     if (toolApi) toolApi.clear(); break;
+          // Extensiones (compat protocolo v1 del deck):
+          case 'color':     if (colorApi) colorApi.apply(d.value); break;
+          case 'density':   applyDensity(d.value); break;
+        }
+      });
+
+      // ── Densidad (point budget) · disponible antes y después de cargar ────
+      const dSlider = document.getElementById('density-slider');
+      const dValue  = document.getElementById('density-value');
+      function fmtBudget(v) {
+        return v >= 1000000
+          ? (v / 1000000).toFixed(v % 1000000 === 0 ? 0 : 1) + ' M'
+          : (v / 1000).toFixed(0) + ' K';
+      }
+      function applyDensity(v) {
+        v = parseInt(v, 10);
+        if (!Number.isFinite(v) || v <= 0) return;
+        viewer.setPointBudget(v);
+        if (dValue)  dValue.textContent = fmtBudget(v);
+        if (dSlider) dSlider.value = Math.max(dSlider.min, Math.min(dSlider.max, v));
+      }
+      dSlider.addEventListener('input', function () { applyDensity(dSlider.value); });
+      applyDensity(initialBudget);   // sync slider ↔ budget del query param
+
+      // ── Load cloud ───────────────────────────────────────────────────────
+      Potree.loadPointCloud(
+        cloudPath,
+        cloudName,
+        function (e) {
+          const pointcloud = e.pointcloud;
+          const material   = pointcloud.material;
+
+          material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+          material.shape         = Potree.PointShape.CIRCLE;
+          material.size          = 2.0;
+
+          // Brillo del coloreado RGB (la nube se veía oscura con EDL · 2026-05-28).
+          material.rgbGamma      = 0.80;
+          material.rgbBrightness = 0.12;
+
+          viewer.scene.addPointCloud(pointcloud);
+
+          // ── Atributos disponibles · gotcha real: el MISMO octree se ha
+          //    cargado con el atributo de color llamado 'rgba' o 'rgb' según
+          //    la ruta de carga → detectar cuál existe y usar ese. ──────────
+          var attrNames = [];
+          try {
+            const attrs = (pointcloud.pcoGeometry && pointcloud.pcoGeometry.pointAttributes
+              && pointcloud.pcoGeometry.pointAttributes.attributes) || [];
+            attrNames = attrs.map(function (a) { return a.name; });
+            console.log('Potree · atributos de la nube:', attrNames);
+          } catch (err) { console.warn('No pude listar atributos:', err); }
+          const rgbAttr = attrNames.indexOf('rgba') !== -1 ? 'rgba'
+                        : attrNames.indexOf('rgb')  !== -1 ? 'rgb' : null;
+          const hasClassification = attrNames.indexOf('classification') !== -1;
+
+          const btnRgb    = document.getElementById('btn-color-rgb');
+          const btnClasif = document.getElementById('btn-color-clasif');
+          if (rgbAttr) btnRgb.dataset.color = rgbAttr;
+          else btnRgb.hidden = true;
+          if (hasClassification) btnClasif.hidden = false;
+
+          material.activeAttributeName = rgbAttr || 'elevation';
+
+          // Rango vertical real (para leyenda de elevación · fallback si el
+          // material aún no expone elevationRange)
+          var zLo = null, zHi = null;
+          try {
+            const bbW = pointcloud.boundingBox.clone().applyMatrix4(pointcloud.matrixWorld);
+            if (isFinite(bbW.min.z) && isFinite(bbW.max.z) && bbW.max.z > bbW.min.z) {
+              zLo = bbW.min.z; zHi = bbW.max.z;
+            }
+          } catch (err) { /* noop */ }
+
+          // ── Encuadre inicial genérico (fallback) ─────────────────────────
+          // Cámara oblicua al sur del centro mirando al norte, escala derivada
+          // del bounding box. El PADRE manda 'setView' tras 'ready' con la vista
+          // del manifest — externalViewSet corta los re-encuadres para no pisarla.
+          // El BB usa matrixWorld (puede ser identity al momento del callback) →
+          // retry con timeouts hasta que se estabilice.
+          function frameCloud() {
+            if (externalViewSet) return;   // el padre ya fijó la vista
+            try {
+              const bb = pointcloud.boundingBox.clone().applyMatrix4(pointcloud.matrixWorld);
+              if (!isFinite(bb.min.x) || (bb.min.x === 0 && bb.max.x === 0)) throw new Error('bb no listo');
+              const cx = (bb.min.x + bb.max.x) / 2;
+              const cy = (bb.min.y + bb.max.y) / 2;
+              const groundZ = bb.min.z + (bb.max.z - bb.min.z) * 0.25;
+              const span = Math.max(bb.max.x - bb.min.x, bb.max.y - bb.min.y, 10);
+              const dist = span * 0.85;
+              const view = viewer.scene.view;
+              view.position.set(cx, cy - dist, groundZ + dist * 0.9);
+              view.lookAt(cx, cy, groundZ);
+            } catch (err) {
+              try { viewer.fitToScreen(0.5); } catch (e2) { /* noop */ }
+            }
+          }
+          frameCloud();
+          setTimeout(frameCloud, 60);
+          setTimeout(frameCloud, 300);
+
+          // ── READY → el padre responde con setView (handshake idempotente).
+          // Si el SW hizo reload-once, la página re-emite 'ready' al recargar y
+          // el padre simplemente re-aplica la vista.
+          readySent = true;
+          post({ action: 'ready' });
+
+          // ── Esconder loading overlay ─────────────────────────────────────
+          // MÓVIL (táctil): ocultar de INMEDIATO — el overlay bloquea el tacto.
+          // ESCRITORIO: spinner con contador de puntos hasta que el detalle se
+          // estabiliza (plateau) o timeout.
+          var overlay  = document.getElementById('loading-overlay');
+          var loadText = document.getElementById('loading-text');
+          if (isTouch) {
+            if (overlay) overlay.classList.add('hidden');
+          } else (function waitRefined() {
+            var lastPts = 0, stable = 0, t0 = Date.now();
+            function countPts() {
+              var pc = viewer.scene.pointclouds[0]; if (!pc) return 0;
+              var s = 0, vn = pc.visibleNodes || [];
+              for (var i = 0; i < vn.length; i++) { var n = vn[i]; s += (n.getNumPoints ? n.getNumPoints() : (n.numPoints || 0)); }
+              return s;
+            }
+            var fmtM = function (n) { return n >= 1e6 ? (n / 1e6).toFixed(1) + ' M' : Math.round(n / 1e3) + ' K'; };
+            function done() { if (overlay) overlay.classList.add('hidden'); }
+            function tick() {
+              var pts = countPts(), elapsed = Date.now() - t0;
+              if (loadText && pts > 0) loadText.textContent = 'Cargando nube · ' + fmtM(pts) + ' puntos';
+              var grew = pts > lastPts * 1.02 + 2000;
+              if (pts > lastPts) lastPts = pts;
+              stable = grew ? 0 : stable + 1;
+              if ((stable >= 4 && pts > 50000 && elapsed > 4000) || elapsed > 40000) done();
+              else setTimeout(tick, 600);
+            }
+            setTimeout(tick, 700);
+          })();
+
+          // ── Wire toolbar de medición (Potree.measuringTool) ──────────────
+          const measuringTool = viewer.measuringTool;
+          const toolBtns = document.querySelectorAll('#measure-toolbar button[data-tool]');
+          const presets = {
+            distance: { showDistances:true,  closed:false, name:'Distancia' },
+            area:     { showDistances:true,  showArea:true, closed:true, name:'Área' },
+            height:   { showDistances:false, showHeight:true, closed:false, maxMarkers:2, name:'Altura' },
+            point:    { showCoordinates:true, showAngles:false, showArea:false, closed:false, maxMarkers:1, name:'Punto' }
+          };
+
+          // ══ Cards info contextuales de medición (multi-card in-viewer) ════
+          // Una card por medición, apiladas bottom-left. Persisten hasta ✕/Limpiar.
+          // Datos por tipo desde measure.points[].position (UTM/m).
+          const stack = document.getElementById('measure-stack');
+          const cards = new Map();      // measure -> { el }
+
+          // Formato numérico es-MX (1,234.56)
+          const nf = (n, dec) => Number(n).toLocaleString('es-MX',
+            { minimumFractionDigits: dec, maximumFractionDigits: dec });
+          const d2 = (a, b) => Math.hypot(b.x - a.x, b.y - a.y);            // dist planimétrica 2D
+          const d3 = (a, b) => Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z); // dist 3D
+
+          function measureType(m) {
+            if (m.showArea) return 'area';
+            if (m.showHeight) return 'height';
+            if (m.showCoordinates && m.maxMarkers === 1) return 'point';
+            return 'distance';
+          }
+
+          function computeData(m) {
+            const pts  = m.points.map(p => p.position);
+            const type = measureType(m);
+            if (type === 'point') {
+              const p = pts[0];
+              return { type: 'Punto', val: nf(p.z, 1), unit: 'm s.n.m.', rows: [
+                ['UTM E', '<b>' + nf(p.x, 2) + '</b> m'],
+                ['UTM N', '<b>' + nf(p.y, 2) + '</b> m'],
+                ['Zona',  '14N · ITRF08']
+              ], segs: null };
+            }
+            if (type === 'height') {
+              const a = pts[0], b = pts[pts.length - 1];
+              const dz = Math.abs(b.z - a.z), horiz = d2(a, b);
+              const pend = horiz > 0 ? (dz / horiz) * 100 : 0;
+              const grad = Math.atan2(dz, horiz) * 180 / Math.PI;
+              return { type: 'Altura', val: nf(dz, 2), unit: 'm  Δ vertical', rows: [
+                ['Pendiente',  '<b>' + nf(pend, 1) + '</b> %'],
+                ['Ángulo',     '<b>' + nf(grad, 1) + '</b>°'],
+                ['Horizontal', nf(horiz, 2) + ' m']
+              ], segs: null };
+            }
+            if (type === 'area') {
+              const area = m.getArea(), ha = area / 10000;   // planimétrica (shoelace x,y)
+              let perim = 0;
+              for (let i = 1; i < pts.length; i++) perim += d2(pts[i - 1], pts[i]);
+              if (pts.length > 2) perim += d2(pts[pts.length - 1], pts[0]);
+              const segs = [];
+              for (let i = 1; i < pts.length; i++) segs.push(['Lado ' + i, nf(d2(pts[i-1], pts[i]), 1) + ' m']);
+              if (pts.length > 2) segs.push(['Lado ' + pts.length + ' (cierre)', nf(d2(pts[pts.length-1], pts[0]), 1) + ' m']);
+              return { type: 'Área', val: nf(area, area >= 10000 ? 0 : 1), unit: 'm²', rows: [
+                ['Hectáreas', '<b>' + nf(ha, 3) + '</b> ha'],
+                ['Perímetro', nf(perim, 1) + ' m'],
+                ['Vértices',  pts.length]
+              ], segs: pts.length > 1 ? segs : null };
+            }
+            // distance
+            const total = m.getTotalDistance();   // 3D
+            let zMin = Infinity, zMax = -Infinity;
+            pts.forEach(p => { zMin = Math.min(zMin, p.z); zMax = Math.max(zMax, p.z); });
+            const desnivel = (pts.length > 1) ? (zMax - zMin) : 0;
+            const segs = [];
+            for (let i = 1; i < pts.length; i++) segs.push(['Tramo ' + i, nf(d3(pts[i-1], pts[i]), 2) + ' m']);
+            return { type: 'Distancia', val: nf(total, 2), unit: 'm  (3D)', rows: [
+              ['Tramos',   Math.max(0, pts.length - 1)],
+              ['Desnivel', '<b>' + nf(desnivel, 2) + '</b> m']
+            ], segs: pts.length > 1 ? segs : null };
+          }
+
+          function rowsHTML(pairs) {
+            return pairs.map(([k, v]) =>
+              `<div class="mi-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+          }
+          function segsHTML(segs) {
+            return segs.map(([k, v]) =>
+              `<div class="seg"><span>${k}</span><span class="v">${v}</span></div>`).join('');
+          }
+
+          function cardTemplate() {
+            const el = document.createElement('div');
+            el.className = 'mi-card';
+            el.innerHTML =
+              '<div class="mi-head">' +
+                '<div class="mi-type"><span class="dot"></span><span class="mi-type-label">Medición</span></div>' +
+                '<button class="mi-close" aria-label="Cerrar medición" title="Cerrar">✕</button>' +
+              '</div>' +
+              '<div class="mi-primary"><span class="val">—</span><span class="unit"></span></div>' +
+              '<div class="mi-rows"></div>' +
+              '<div class="mi-segs" style="display:none"></div>';
+            return el;
+          }
+
+          function paintCard(el, data) {
+            el.querySelector('.mi-type-label').textContent = data.type;
+            el.querySelector('.mi-primary .val').textContent = data.val;
+            el.querySelector('.mi-primary .unit').textContent = data.unit;
+            el.querySelector('.mi-rows').innerHTML = rowsHTML(data.rows);
+            const seg = el.querySelector('.mi-segs');
+            if (data.segs && data.segs.length) { seg.innerHTML = segsHTML(data.segs); seg.style.display = 'flex'; }
+            else { seg.innerHTML = ''; seg.style.display = 'none'; }
+          }
+
+          function renderCard(m) {
+            const entry = cards.get(m);
+            if (!entry || !m.points || m.points.length === 0) return;
+            paintCard(entry.el, computeData(m));
+          }
+
+          function openCard(m) {
+            let entry = cards.get(m);
+            if (!entry) {
+              const el = cardTemplate();
+              el.querySelector('.mi-close').addEventListener('click', () => closeCard(m));
+              stack.appendChild(el);            // se apila debajo (más nueva junto al ancla)
+              entry = { el };
+              cards.set(m, entry);
+              document.body.classList.add('measure-open');
+            }
+            renderCard(m);
+            entry.el.scrollIntoView({ block: 'nearest' });
+            return entry;
+          }
+          function closeCard(m) {
+            const entry = cards.get(m);
+            if (!entry) return;
+            entry.el.remove();
+            cards.delete(m);
+            if (cards.size === 0) document.body.classList.remove('measure-open');
+          }
+          function closeAllCards() {
+            cards.forEach((e) => e.el.remove());
+            cards.clear();
+            document.body.classList.remove('measure-open');
+          }
+
+          // ⚠ NO usar viewer.inputHandler.toggleSelection() con mediciones: el
+          // TransformationTool lee selection[0].boundingBox.getCenter() cada frame
+          // y los spheres de Measure NO tienen boundingBox → crash + overlay de error.
+          // Usamos el evento 'click' del sphere (onMouseUp sin tocar la selección).
+          function attachClick(sphere, m) {
+            if (!sphere || sphere.__clkAttached) return;
+            sphere.__clkAttached = true;
+            sphere.userData.__measure = m;
+            sphere.addEventListener('click', () => openCard(m));
+          }
+
+          // Wirea una medición: clickeable (re-ver) + refresco en vivo de su card.
+          function wireMeasure(m) {
+            if (m.__wired) return;
+            m.__wired = true;
+            m.spheres.forEach((s) => attachClick(s, m));
+            m.addEventListener('marker_added', (e) => attachClick(e.sphere, m));
+            const refresh = () => { if (cards.has(m)) renderCard(m); };
+            ['marker_added','marker_dropped','marker_moved','marker_removed']
+              .forEach((ev) => m.addEventListener(ev, refresh));
+          }
+
+          viewer.scene.measurements.forEach(wireMeasure);
+          viewer.scene.addEventListener('measurement_added',   (e) => { if (e.measurement) wireMeasure(e.measurement); });
+          viewer.scene.addEventListener('measurement_removed', (e) => { if (e.measurement) closeCard(e.measurement); });
+
+          // Activación de herramienta (botones in-iframe + comandos del padre).
+          // Estado de herramienta → SIEMPRE notificar al padre ({action:'tool'}).
+          function emitTool(tool) { post({ action: 'tool', tool: tool || null }); }
+
+          function clearMeasurements() {
+            viewer.scene.measurements.slice().forEach(m => viewer.scene.removeMeasurement(m));
+            toolBtns.forEach(b => b.classList.remove('active'));
+            closeAllCards();
+            measuringActive = false;   // reanuda la navegación táctil
+            emitTool(null);
+          }
+          function stopTool() {
+            // reanuda la navegación SIN borrar mediciones existentes
+            try { viewer.inputHandler.dispatchEvent({ type: 'cancel_insertions' }); } catch (e) { /* noop */ }
+            measuringActive = false;
+            toolBtns.forEach(b => b.classList.remove('active'));
+            emitTool(null);
+          }
+          function activateTool(tool) {
+            if (tool === 'clear') { clearMeasurements(); return; }
+            if (!presets[tool]) { console.warn('[potree-scene] herramienta desconocida:', tool); return; }
+            toolBtns.forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+            measuringActive = true;    // mientras se mide, el gesto coloca puntos (no navega)
+            const m = measuringTool.startInsertion(presets[tool]);
+            wireMeasure(m);
+            openCard(m);   // feedback en vivo: la card se actualiza al colocar puntos
+            emitTool(tool);
+          }
+          toolBtns.forEach(btn => btn.addEventListener('click', () => activateTool(btn.dataset.tool)));
+          toolApi = { activate: activateTool, stop: stopTool, clear: clearMeasurements };
+
+          // ── Leyenda de elevación (solo visible en modo 'elevation') ─────
+          const legend  = document.getElementById('elevation-legend');
+          const teNodes = [0,1,2,3,4].map(i => document.getElementById('ele-t' + i));
+          function updateElevationLegend(attr) {
+            document.body.classList.toggle('elevation-on', attr === 'elevation');
+            const isElev = attr === 'elevation';
+            if (isElev) {
+              // elevationRange real del material (Potree lo inicializa desde bbox.z);
+              // fallback: bounding box world de la nube.
+              let lo = null, hi = null;
+              try {
+                const r = material.elevationRange;
+                if (Array.isArray(r) && r.length === 2) { lo = r[0]; hi = r[1]; }
+              } catch (e) { /* noop */ }
+              if (lo == null || hi == null) { lo = zLo; hi = zHi; }
+              if (lo != null && hi != null) {
+                const t = (frac) => Math.round(lo + (hi - lo) * frac);
+                teNodes[0].textContent = t(0) + ' m';
+                teNodes[1].textContent = t(0.25);
+                teNodes[2].innerHTML   = '<b>' + t(0.5) + '</b>';
+                teNodes[3].textContent = t(0.75);
+                teNodes[4].textContent = t(1) + ' m';
+              }
+              legend.classList.add('visible');
+              legend.setAttribute('aria-hidden', 'false');
+            } else {
+              legend.classList.remove('visible');
+              legend.setAttribute('aria-hidden', 'true');
+            }
+          }
+
+          // ── Color (RGB ↔ Clasif ↔ Elevación) · botones + comando externo ──
+          const colorBtns = document.querySelectorAll('#color-toggle button[data-color]');
+          function applyColor(value) {
+            // 'rgba' pedido externamente se traduce al atributo real detectado
+            if ((value === 'rgba' || value === 'rgb') && rgbAttr) value = rgbAttr;
+            colorBtns.forEach(b => b.classList.toggle('active', b.dataset.color === value));
+            material.activeAttributeName = value;
+            updateElevationLegend(value);
+          }
+          colorBtns.forEach(btn => btn.addEventListener('click', () => applyColor(btn.dataset.color)));
+          colorApi = { apply: applyColor };
+          // Estado inicial (RGB por default · leyenda oculta)
+          updateElevationLegend(material.activeAttributeName);
+
+          console.log('Potree cloud loaded · ' + cloudName + ' · earthControls'
+            + (isTouch ? ' + map-touch' : '')
+            + (externalControls ? ' + external-controls' : ''));
+        }
+      );
+
+      // No cargar sidebar de Potree (UI propia)
+      viewer.loadGUI = function () {};
+
+      // ══ Controlador táctil estilo mapa (móvil) ════════════════════════════
+      // earthControls queda como base inactiva. Aquí manejamos el gesto directo
+      // sobre viewer.scene.view:
+      //   · 1 dedo  → desplazar sobre el terreno (view.pan, escalado por radius)
+      //   · 2 dedos → pellizcar = zoom · girar = yaw · arrastrar vertical = tilt
+      //               alrededor del punto que mira la cámara (getPivot).
+      // Vectores construidos con métodos de las instancias Vector3 (THREE no es global).
+      function setupMapTouchNav(viewer, isMeasuring) {
+        const el = viewer.renderer.domElement;
+        const MIN_R = 0.1, MAX_R = 6000;   // piso de zoom muy bajo · el near capado por radius evita el recorte
+        let mode = 0, p = null;
+        const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+        const mid  = (t) => ({ x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2 });
+        const ang  = (t) => Math.atan2(t[1].clientY - t[0].clientY, t[1].clientX - t[0].clientX);
+
+        function start(e) {
+          if (isMeasuring()) return;       // dejar que el tap coloque puntos de medición
+          const t = e.touches;
+          if (t.length === 1) { mode = 1; p = { x:t[0].clientX, y:t[0].clientY }; e.preventDefault(); }
+          else if (t.length >= 2) { mode = 2; p = { d:dist(t), m:mid(t), a:ang(t) }; e.preventDefault(); }
+        }
+        function move(e) {
+          if (isMeasuring() || !mode) return;
+          const t = e.touches, v = viewer.scene.view;
+          const W = el.clientWidth || 1, H = el.clientHeight || 1;
+          if (mode === 1 && t.length === 1) {
+            const dx = t[0].clientX - p.x, dy = t[0].clientY - p.y;
+            p = { x:t[0].clientX, y:t[0].clientY };
+            const g = v.radius * 1.6;       // pan ∝ distancia
+            v.pan(-(dx / W) * g, (dy / H) * g);   // el terreno sigue al dedo
+            e.preventDefault();
+          } else if (mode === 2 && t.length >= 2) {
+            const d = dist(t), m = mid(t), a = ang(t);
+            const pivot = v.getPivot();                 // punto que mira la cámara
+            const toCam = v.position.clone().sub(pivot);
+            const Z = v.position.clone().set(0, 0, 1);   // eje vertical mundo
+            // zoom: escala distancia cámara↔pivote
+            let len = toCam.length();
+            if (p.d > 0 && d > 0) len = Math.max(MIN_R, Math.min(MAX_R, len * (p.d / d)));
+            // girar (yaw): twist de los 2 dedos alrededor del eje vertical
+            toCam.applyAxisAngle(Z, (a - p.a));
+            // tilt (pitch): arrastre vertical del punto medio · sin voltear bajo el horizonte
+            const side = toCam.clone().cross(Z);
+            if (side.length() > 1e-6) {
+              side.normalize();
+              const dPitch = ((m.y - p.m.y) / H) * 2.2;
+              const test = toCam.clone().applyAxisAngle(side, dPitch);
+              if (test.z > 0.05 * test.length()) toCam.applyAxisAngle(side, dPitch);
+            }
+            toCam.normalize().multiplyScalar(len);
+            v.position.copy(pivot.clone().add(toCam));
+            v.lookAt(pivot.x, pivot.y, pivot.z);          // recomputa yaw/pitch/radius coherentes
+            p = { d:d, m:m, a:a };
+            e.preventDefault();
+          }
+        }
+        function end(e) {
+          const t = e.touches;
+          if (t.length === 0) mode = 0;
+          else if (t.length === 1) { mode = 1; p = { x:t[0].clientX, y:t[0].clientY }; }
+          else { mode = 2; p = { d:dist(t), m:mid(t), a:ang(t) }; }
+        }
+        el.addEventListener('touchstart',  start, { passive:false });
+        el.addEventListener('touchmove',   move,  { passive:false });
+        el.addEventListener('touchend',    end,   { passive:false });
+        el.addEventListener('touchcancel', end,   { passive:false });
+      }
+
+    });
+  </script>
+</body>
+</html>

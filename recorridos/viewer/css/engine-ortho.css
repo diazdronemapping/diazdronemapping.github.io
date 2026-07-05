@@ -1,0 +1,61 @@
+/* engine-ortho.css — tema dark de Leaflet para la escena ortofoto (Recorridos).
+   Lo inyecta engine-ortho.js; solo aplica dentro de .rc-engine--ortho. */
+
+/* NOTA: el layout crítico de .rc-ortho-map (position/inset/isolation/bg) va
+   INLINE desde engine-ortho.js — este <link> carga async y Leaflet necesita
+   el tamaño correcto en el instante de crear el mapa. Aquí solo theming. */
+
+.rc-engine--ortho .leaflet-container {
+  background: #1A1A1A;
+  font-family: var(--rc-font-body, 'Work Sans', 'Segoe UI', sans-serif);
+  outline: none;
+}
+
+/* El wrapper del divIcon va limpio: el estilo lo pone .rc-hotspot (viewer.css) */
+.rc-ortho-hotspot { background: transparent; border: 0; }
+
+/* Esquinas de controles: librar el chrome del viewer
+   (menu-toggle en bottom-right · rc-controls en bottom-left · plan-widget
+   280px de ancho en top-right → el control de capas va a su izquierda) */
+.rc-engine--ortho .leaflet-bottom.leaflet-right { margin-bottom: 56px; }
+.rc-engine--ortho .leaflet-bottom.leaflet-left { margin-left: 56px; }
+.rc-engine--ortho .leaflet-top.leaflet-right { margin-top: 74px; margin-right: 296px; }
+
+/* Zoom (y cualquier .leaflet-bar) en dark */
+.rc-engine--ortho .leaflet-bar { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); }
+.rc-engine--ortho .leaflet-bar a {
+  background: rgba(26, 26, 26, 0.88);
+  color: #EAEAEA;
+  border-bottom-color: rgba(255, 255, 255, 0.14);
+}
+.rc-engine--ortho .leaflet-bar a:hover,
+.rc-engine--ortho .leaflet-bar a:focus {
+  background: rgba(123, 193, 66, 0.3);
+  color: #fff;
+}
+.rc-engine--ortho .leaflet-bar a.leaflet-disabled {
+  background: rgba(26, 26, 26, 0.6);
+  color: #666;
+}
+
+/* Control de capas (toggle de curvas de nivel) */
+.rc-engine--ortho .leaflet-control-layers {
+  background: rgba(26, 26, 26, 0.92);
+  color: #EAEAEA;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+.rc-engine--ortho .leaflet-control-layers-toggle { filter: invert(0.85); }
+.rc-engine--ortho .leaflet-control-layers label { font-size: 13px; }
+.rc-engine--ortho .leaflet-control-layers input { accent-color: #7BC142; }
+
+/* Attribution (Esri la exige) — discreta pero visible */
+.rc-engine--ortho .leaflet-control-attribution {
+  background: rgba(26, 26, 26, 0.65);
+  color: rgba(234, 234, 234, 0.75);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 8px 8px 0 0;
+}
+.rc-engine--ortho .leaflet-control-attribution a { color: #7BC142; }
