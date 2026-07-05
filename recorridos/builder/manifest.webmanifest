@@ -1,0 +1,15 @@
+{
+  "name": "Recorridos · Studio",
+  "short_name": "Recorridos",
+  "description": "Arma recorridos virtuales: sube panos 360, coloca hotspots y publica.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#141414",
+  "theme_color": "#1A1A1A",
+  "icons": [
+    { "src": "./icons/studio-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/studio-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icons/studio-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
