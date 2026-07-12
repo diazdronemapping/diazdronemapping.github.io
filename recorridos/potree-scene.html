@@ -11,6 +11,16 @@
      GUARD: solo si /sw-octree.js EXISTE (fetch OK). En local (server plano
      sirviendo la raíz del repo) no hay SW → skip silencioso, sin reloads. */
   (function () {
+    /* FIX post-L1: el reload-once de abajo cambia document.referrer (pasa a
+       ser esta MISMA página) → PARENT_ORIGIN se derivaba mal tras el reload
+       y el 'ready' se posteaba al targetOrigin equivocado (el navegador lo
+       tira → timeout de 45 s en el padre). Persistir el origen REAL del
+       padre en la PRIMERA carga, cuando el referrer todavía es el padre. */
+    try {
+      if (window !== window.parent && document.referrer && !sessionStorage.getItem('rcParentOrigin')) {
+        sessionStorage.setItem('rcParentOrigin', new URL(document.referrer).origin);
+      }
+    } catch (e) { /* noop */ }
     if (!('serviceWorker' in navigator)) return;
     fetch('/sw-octree.js', { method: 'HEAD' }).then(function (res) {
       if (!res || !res.ok) {
@@ -738,7 +748,11 @@
       var PARENT_ORIGIN = (function () {
         try {
           if (window === window.parent) return null;   // standalone
-          var o = new URL(document.referrer).origin;   // strict-origin-when-cross-origin conserva el origin
+          // Preferir el origen persistido en la 1ª carga (script del <head>):
+          // tras el reload-once del SW, document.referrer ya NO es el padre.
+          var stored = null;
+          try { stored = sessionStorage.getItem('rcParentOrigin'); } catch (e2) { /* noop */ }
+          var o = stored || new URL(document.referrer).origin;   // strict-origin-when-cross-origin conserva el origin
           return allowedOrigin(o) ? o : null;
         } catch (e) { return null; }
       })();
