@@ -63,7 +63,8 @@
     /* Minimal overlay label */
     #overlay-label {
       position: absolute;
-      bottom: 10px; left: 12px;
+      bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      left: calc(12px + env(safe-area-inset-left, 0px));
       font-family: 'Space Grotesk', monospace, sans-serif;
       font-size: 11px;
       letter-spacing: 0.1em;
@@ -109,10 +110,15 @@
     body.embedded-chrome #measure-toolbar { top: 64px; }
     body.embedded-chrome #color-toggle { top: 64px; }
     body.embedded-chrome #density-control { top: 108px; }
+    body.embedded-chrome #overlay-label { display: none; }
+    body.embedded-chrome #elevation-legend,
+    body.embedded-chrome #measure-stack {
+      bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    }
 
     #measure-toolbar {
       position: absolute;
-      top: 12px; left: 12px;
+      top: 12px; left: calc(12px + env(safe-area-inset-left, 0px));
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
@@ -233,7 +239,7 @@
     /* Leyenda de elevación · horizontal · solo visible en modo 'elevation' */
     #elevation-legend {
       position: absolute;
-      bottom: 12px; right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px)); right: 12px;
       z-index: 30;
       display: none;
       flex-direction: column;
@@ -307,7 +313,8 @@
     /* Stack de cards de medición · bottom-left · una card por medición (apiladas) */
     #measure-stack {
       position: absolute;
-      bottom: 12px; left: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      left: calc(12px + env(safe-area-inset-left, 0px));
       z-index: 31;
       display: flex;
       flex-direction: column;       /* primera arriba · última (más nueva) abajo, junto al ancla */
@@ -387,6 +394,13 @@
       color: rgba(123,193,66,0.85);
       letter-spacing: 0.04em;
     }
+    /* Estado previo al primer marcador · instrucción clara en vez de “—” */
+    .mi-card.waiting .mi-primary .val {
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.35;
+      color: rgba(255,255,255,0.72);
+    }
     /* Filas label / valor */
     .mi-card .mi-rows { display: flex; flex-direction: column; gap: 3px; }
     .mi-card .mi-row {
@@ -433,20 +447,65 @@
     /* Ocultar el branding label mientras hay cards visibles (evita solape bottom-left) */
     body.measure-open #overlay-label { opacity: 0; transition: opacity 0.2s; }
 
+    /* Targets táctiles amplios sin alterar las dimensiones de escritorio */
+    @media (pointer: coarse) {
+      #measure-toolbar button {
+        min-width: 44px;
+        min-height: 44px;
+      }
+      #color-toggle button {
+        min-width: 44px;
+        height: 44px;
+      }
+      #density-control input[type=range] {
+        height: 28px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+      }
+      #density-control input[type=range]::-webkit-slider-runnable-track {
+        height: 4px;
+        background: rgba(123,193,66,0.55);
+        border-radius: 999px;
+      }
+      #density-control input[type=range]::-webkit-slider-thumb {
+        width: 28px;
+        height: 28px;
+        margin-top: -12px;
+        -webkit-appearance: none;
+        appearance: none;
+        border: 0;
+        border-radius: 50%;
+        background: #7BC142;
+      }
+      #density-control input[type=range]::-moz-range-track {
+        height: 4px;
+        background: rgba(123,193,66,0.55);
+        border-radius: 999px;
+      }
+      #density-control input[type=range]::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+        border: 0;
+        border-radius: 50%;
+        background: #7BC142;
+      }
+    }
+
     /* ──────────────────────────────────────────────────────────────────
        Móvil (≤600px) · reacomodo de overlays para que NO se enciman.
-       Cluster superior compacto: toolbar (solo íconos · 1 fila) arriba-izq +
-       densidad arriba-der · selector de color en 2ª fila. Cluster inferior:
+       Cluster superior compacto: toolbar (solo íconos · 1 fila) arriba-izq,
+       selector de color en 2ª fila y densidad en 3ª fila. Cluster inferior:
        leyenda full-width abajo · cards de medición elevadas sobre la leyenda
        cuando el modo elevación está activo.
        ────────────────────────────────────────────────────────────────── */
     @media (max-width: 600px) {
       /* Toolbar de medición · solo íconos · una sola fila · arriba-izquierda */
       #measure-toolbar {
-        top: 10px; left: 10px; right: auto;
+        top: 10px; left: calc(10px + env(safe-area-inset-left, 0px)); right: auto;
         flex-wrap: nowrap;
         gap: 5px;
-        max-width: calc(100% - 190px);   /* deja sitio a la densidad a la derecha */
+        max-width: calc(100% - 20px);
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
@@ -455,19 +514,30 @@
       #measure-toolbar .ti { margin-right: 0; font-size: 13px; }
       #measure-toolbar .tl { display: none; }          /* icon-only en móvil */
 
-      /* Densidad · arriba-derecha · compacta */
+      /* Densidad · 3ª fila a la derecha · compacta y sin recortar el valor */
       #density-control {
-        top: 10px; right: 10px; left: auto;
-        width: 165px;
+        top: 118px; right: 10px; left: auto;
+        width: 180px;
         padding: 7px 10px;
       }
+      #density-control input[type=range] { min-width: 0; }
 
-      /* Selector de color · 2ª fila · arriba-izquierda (no comparte fila con la toolbar) */
-      #color-toggle { top: 64px; right: auto; left: 10px; }
+      /* Selector de color · debajo de la toolbar táctil (44px + 8px de aire) */
+      #color-toggle {
+        top: 62px; right: auto;
+        left: calc(10px + env(safe-area-inset-left, 0px));
+      }
+
+      /* Embebido móvil · mismo apilado con 52px extra por el chrome del padre */
+      body.embedded-chrome #measure-toolbar { top: 62px; }
+      body.embedded-chrome #color-toggle { top: 114px; }
+      body.embedded-chrome #density-control { top: 170px; }
 
       /* Leyenda de elevación · barra full-width abajo */
       #elevation-legend {
-        left: 10px; right: 10px; bottom: 10px;
+        left: calc(10px + env(safe-area-inset-left, 0px));
+        right: 10px;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px));
         width: auto;
         padding: 7px 12px 9px;
       }
@@ -475,10 +545,21 @@
 
       /* Cards de medición · abajo-izq · se elevan sobre la leyenda en modo elevación */
       #measure-stack {
-        left: 10px; right: auto; bottom: 12px;
+        left: calc(10px + env(safe-area-inset-left, 0px));
+        right: auto;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
         max-height: calc(100% - 150px);
       }
-      body.elevation-on #measure-stack { bottom: 94px; }  /* sobre la leyenda full-width (≈72px alto) */
+      body.elevation-on #measure-stack {
+        bottom: calc(94px + env(safe-area-inset-bottom, 0px));
+      }  /* sobre la leyenda full-width (≈72px alto) */
+      body.embedded-chrome #elevation-legend,
+      body.embedded-chrome #measure-stack {
+        bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+      }
+      body.embedded-chrome.elevation-on #measure-stack {
+        bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+      }
       .mi-card { width: min(220px, calc(100vw - 20px)); }
     }
   </style>
@@ -503,10 +584,10 @@
     <button data-tool="clear" class="clear" title="Borrar medidas"><span class="ti">✕</span><span class="tl">Limpiar</span></button>
   </div>
 
-  <!-- Selector de coloreado · RGB por default · Clasif. solo si la nube trae classification -->
+  <!-- Selector de coloreado · color real por default · terreno solo si la nube trae classification -->
   <div id="color-toggle">
-    <button data-color="rgba" class="active" id="btn-color-rgb">RGB</button>
-    <button data-color="classification" id="btn-color-clasif" hidden>Clasif.</button>
+    <button data-color="rgba" class="active" id="btn-color-rgb">Color real</button>
+    <button data-color="classification" id="btn-color-clasif" hidden>Terreno</button>
     <button data-color="elevation">Elevación</button>
   </div>
 
@@ -594,6 +675,7 @@
       const viewer = new Potree.Viewer(
         document.getElementById('potree_render_area')
       );
+      window.__potreeViewer = viewer; // handle de solo-lectura para debug/QA
 
       viewer.setEDLEnabled(true);
       viewer.setEDLRadius(1.4);
@@ -647,6 +729,18 @@
         try { parent.postMessage(Object.assign({ source: 'potree-state' }, msg), '*'); }
         catch (e) { /* sin padre (standalone) — noop */ }
       }
+
+      // Interacción del usuario dentro de la nube → 'interact' al padre (sus
+      // pointerdown no cruzan el iframe; con esto cancela su autopilot).
+      var lastInteractAt = 0;
+      function postInteract() {
+        var now = performance.now();
+        if (now - lastInteractAt < 400) return; // throttle compartido pointer/wheel
+        lastInteractAt = now;
+        post({ action: 'interact' });
+      }
+      window.addEventListener('pointerdown', postInteract, true);
+      window.addEventListener('wheel', postInteract, { capture: true, passive: true });
 
       function currentView() {
         var v = viewer.scene.view;
@@ -942,6 +1036,7 @@
           }
 
           function paintCard(el, data) {
+            el.classList.remove('waiting');
             el.querySelector('.mi-type-label').textContent = data.type;
             el.querySelector('.mi-primary .val').textContent = data.val;
             el.querySelector('.mi-primary .unit').textContent = data.unit;
@@ -953,7 +1048,21 @@
 
           function renderCard(m) {
             const entry = cards.get(m);
-            if (!entry || !m.points || m.points.length === 0) return;
+            if (!entry) return;
+            // Potree crea la medición YA con un punto flotante (sigue al cursor):
+            // durante la inserción, 1 punto = todavía no hay nada que medir.
+            const pts = m.points ? m.points.length : 0;
+            if (pts === 0 || (m.__inserting && pts <= 1)) {
+              entry.el.classList.add('waiting');
+              entry.el.querySelector('.mi-type-label').textContent = m.name || 'Medición';
+              entry.el.querySelector('.mi-primary .val').textContent = 'Toca para colocar el primer punto';
+              entry.el.querySelector('.mi-primary .unit').textContent = '';
+              entry.el.querySelector('.mi-rows').innerHTML = '';
+              const seg = entry.el.querySelector('.mi-segs');
+              seg.innerHTML = '';
+              seg.style.display = 'none';
+              return;
+            }
             paintCard(entry.el, computeData(m));
           }
 
@@ -984,6 +1093,22 @@
             document.body.classList.remove('measure-open');
           }
 
+          // Una cancelación no debe conservar mediciones a medio insertar.
+          // OJO (review adversarial P2): en el Potree vendored el punto FLOTANTE
+          // que sigue al cursor cuenta en m.points — para 'point' (maxMarkers 1)
+          // y 'height' (2) el cancel nativo NO lo remueve, así que un umbral de
+          // points.length===0 dejaba mediciones fantasma con datos falsos.
+          // __inserting (lo pone activateTool, lo baja marker_dropped) es la
+          // señal fiable de "aún no confirmada por el usuario".
+          function removeEmptyMeasurement(m) {
+            if (!m) return false;
+            const confirmed = m.points ? m.points.length : 0;
+            if (!m.__inserting && confirmed > 0) return false;
+            if (viewer.scene.measurements.indexOf(m) !== -1) viewer.scene.removeMeasurement(m);
+            else closeCard(m);
+            return true;
+          }
+
           // ⚠ NO usar viewer.inputHandler.toggleSelection() con mediciones: el
           // TransformationTool lee selection[0].boundingBox.getCenter() cada frame
           // y los spheres de Measure NO tienen boundingBox → crash + overlay de error.
@@ -1001,7 +1126,10 @@
             m.__wired = true;
             m.spheres.forEach((s) => attachClick(s, m));
             m.addEventListener('marker_added', (e) => attachClick(e.sphere, m));
-            const refresh = () => { if (cards.has(m)) renderCard(m); };
+            const refresh = () => {
+              if (removeEmptyMeasurement(m)) return;
+              if (cards.has(m)) renderCard(m);
+            };
             ['marker_added','marker_dropped','marker_moved','marker_removed']
               .forEach((ev) => m.addEventListener(ev, refresh));
           }
@@ -1023,7 +1151,12 @@
           }
           function stopTool() {
             // reanuda la navegación SIN borrar mediciones existentes
-            try { viewer.inputHandler.dispatchEvent({ type: 'cancel_insertions' }); } catch (e) { /* noop */ }
+            try { viewer.dispatchEvent({ type: 'cancel_insertions' }); } catch (e) { /* noop */ }
+            // el punto flotante que sigue al cursor vive en inputHandler.drag —
+            // limpiarlo evita que el siguiente clic de navegación lo "suelte"
+            // como punto real (review adversarial P2)
+            try { if (viewer.inputHandler) viewer.inputHandler.drag = null; } catch (e) { /* noop */ }
+            viewer.scene.measurements.slice().forEach(removeEmptyMeasurement);
             measuringActive = false;
             toolBtns.forEach(b => b.classList.remove('active'));
             emitTool(null);
@@ -1031,9 +1164,17 @@
           function activateTool(tool) {
             if (tool === 'clear') { clearMeasurements(); return; }
             if (!presets[tool]) { console.warn('[potree-scene] herramienta desconocida:', tool); return; }
+            // cambiar de herramienta a media inserción = cancelar la anterior
+            // (el cancel nativo no barre 'point'/'height', review adversarial P2)
+            stopTool();
             toolBtns.forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
             measuringActive = true;    // mientras se mide, el gesto coloca puntos (no navega)
             const m = measuringTool.startInsertion(presets[tool]);
+            m.__inserting = true;      // con solo el punto flotante, la card instruye
+            m.addEventListener('marker_dropped', function () {
+              m.__inserting = false;
+              renderCard(m);           // primer punto real → datos en vivo
+            });
             wireMeasure(m);
             openCard(m);   // feedback en vivo: la card se actualiza al colocar puntos
             emitTool(tool);

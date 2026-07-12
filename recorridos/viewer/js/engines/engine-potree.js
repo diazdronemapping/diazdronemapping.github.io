@@ -18,7 +18,9 @@
  *   recrea en el próximo show().
  */
 
-const READY_TIMEOUT_MS = 90000; // la nube pesa (508 MB); localhost tarda ~5-15 s
+// Primer load real (Pages + reload-once del SW) puede tardar >20 s; el caso
+// "nube inaccesible" ya NO llega aquí (preflight fail-fast en show()).
+const READY_TIMEOUT_MS = 45000;
 
 export function create(ctx, container) {
   let iframe = null;        // iframe vivo (keep-alive en desktop)
@@ -71,6 +73,9 @@ export function create(ctx, container) {
     } else if (d.action === 'tool') {
       log('tool =', d.tool ?? null);
       ctx.emit('potree-tool', { tool: d.tool ?? null });
+    } else if (d.action === 'interact') {
+      // gesto del usuario dentro del iframe — el controller cancela el autopilot
+      ctx.emit('potree-interact');
     }
   }
   window.addEventListener('message', onMessage);
@@ -111,6 +116,15 @@ export function create(ctx, container) {
         return;
       }
 
+      // Fail-fast (P0): una nube inaccesible no debe costar 45 s de pantalla
+      // negra — el metadata.json es pequeño y confirma que el path responde.
+      try {
+        const r = await fetch(path, { cache: 'no-store' });
+        if (!r.ok) throw new Error(String(r.status));
+      } catch {
+        throw new Error('La nube de puntos no está disponible en este momento.');
+      }
+
       // Nube distinta (o primer show / show tras hide móvil) → iframe NUEVO.
       destroyIframe();
       lastView = null;
@@ -132,9 +146,8 @@ export function create(ctx, container) {
           resolve,
           reject,
           timer: setTimeout(() => {
-            settle(false, new Error(
-              `[engine-potree] timeout (${READY_TIMEOUT_MS / 1000} s) esperando 'ready' de potree-scene ` +
-              `— ¿es accesible la nube en ${path}?`));
+            console.error(`[engine-potree] timeout (${READY_TIMEOUT_MS / 1000} s) esperando 'ready' de ${path}`);
+            settle(false, new Error('La nube de puntos tardó demasiado en responder.'));
             destroyIframe();   // permite reintentar con un show() posterior
           }, READY_TIMEOUT_MS),
         };

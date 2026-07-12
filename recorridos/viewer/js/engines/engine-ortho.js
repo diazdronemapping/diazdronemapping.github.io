@@ -98,7 +98,8 @@ export function create(ctx, container) {
   let sceneLayers = [];         // capas a retirar al reconstruir (tiles, geojson, markers)
   let toggleLayers = [];        // overlays del control (pueden estar ON al salir)
   let homeBounds = null;        // encuadre default (predio > clip)
-  let pendingTrace = [];        // <path> SVG del predio pendientes de animar
+  let traceLayers = [];         // capas con trace — los <path> se recolectan al animar
+  let traceRun = 0;             // token: invalida la limpieza de una animación superada
 
   function createMap() {
     const L = window.L;
@@ -118,6 +119,9 @@ export function create(ctx, container) {
       zoomSnap: 0.25,
       maxBoundsViscosity: 0.35,
       worldCopyJump: false,
+      // Embebido (iframe en Wix): la rueda es del scroll de la página host,
+      // no del zoom del mapa — quedan los botones +/− y el pinch táctil.
+      scrollWheelZoom: !ctx.embedded,
     });
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     // Attribution SIEMPRE visible (Esri lo exige) — bottomleft para no chocar
@@ -131,7 +135,7 @@ export function create(ctx, container) {
     for (const l of toggleLayers) { try { map.removeLayer(l); } catch (_) {} }
     if (layersCtl) { try { map.removeControl(layersCtl); } catch (_) {} }
     sceneLayers = []; toggleLayers = []; layersCtl = null;
-    homeBounds = null; pendingTrace = [];
+    homeBounds = null; traceLayers = []; traceRun++;
   }
 
   async function buildScene(scene) {
@@ -212,7 +216,10 @@ export function create(ctx, container) {
         const b = layer.getBounds();
         if (b.isValid()) homeBounds = b;
         if (def.popup) layer.on('click', () => ctx.emit('info', def.popup));
-        if (def.trace) layer.eachLayer(l => { if (l._path) pendingTrace.push(l._path); });
+        // OJO: aquí el mapa aún NO tiene vista (fitBounds llega en show()) y
+        // Leaflet difiere el onAdd real — l._path no existe todavía. Se guarda
+        // la CAPA y runTrace() recolecta los <path> cuando ya están en el DOM.
+        if (def.trace) traceLayers.push(layer);
       } else if (def.toggle) {
         overlays[def.label || LAYER_NAMES[def.type] || def.type] = layer; // OFF por default
         toggleLayers.push(layer);
@@ -222,7 +229,30 @@ export function create(ctx, container) {
       }
     }
     if (Object.keys(overlays).length) {
-      layersCtl = L.control.layers(null, overlays, { position: 'topright', collapsed: true }).addTo(map);
+      // Toggles propios con label visible (el control genérico de Leaflet
+      // escondía "Curvas de nivel" tras un icono anónimo — auditoría uxV#15).
+      const Toggles = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd() {
+          const div = L.DomUtil.create('div', 'rc-ortho-toggles');
+          for (const [name, layer] of Object.entries(overlays)) {
+            const btn = L.DomUtil.create('button', 'rc-ortho-toggle', div);
+            btn.type = 'button';
+            btn.textContent = name; // texto plano — sin innerHTML (XSS)
+            btn.setAttribute('aria-pressed', 'false');
+            L.DomEvent.on(btn, 'click', e => {
+              L.DomEvent.stop(e);
+              const on = !map.hasLayer(layer);
+              if (on) layer.addTo(map); else map.removeLayer(layer);
+              btn.classList.toggle('is-on', on);
+              btn.setAttribute('aria-pressed', String(on));
+            });
+          }
+          L.DomEvent.disableClickPropagation(div);
+          return div;
+        },
+      });
+      layersCtl = new Toggles().addTo(map);
     }
 
     /* (4) hotspots nav / info / link */
@@ -255,19 +285,26 @@ export function create(ctx, container) {
   }
 
   function runTrace() {
-    if (!pendingTrace.length) return;
-    const paths = pendingTrace;
-    pendingTrace = [];
-    if (ctx.reducedMotion) return;
+    if (!traceLayers.length || ctx.reducedMotion) return;
+    // Recolectar AHORA: tras fitBounds/setView los paths ya viven en el DOM.
+    // Se corre en CADA show() — la revisita (keep-alive) re-anima el trazo.
+    const paths = [];
+    for (const layer of traceLayers) layer.eachLayer(l => { if (l._path) paths.push(l._path); });
+    if (!paths.length) return;
+    const run = ++traceRun;
     const DUR = 1600;
     for (const p of paths) animateDrawPath(p, DUR);
     // Leaflet redibuja el atributo d del path al hacer zoom: limpiar el dash al
     // terminar para que el trazo no aparezca "punteado" tras re-proyecciones.
-    setTimeout(() => paths.forEach(p => {
-      p.style.transition = 'none';
-      p.style.strokeDasharray = '';
-      p.style.strokeDashoffset = '';
-    }), DUR + 200);
+    // El token invalida esta limpieza si otra animación la superó (goTo force).
+    setTimeout(() => {
+      if (run !== traceRun) return;
+      paths.forEach(p => {
+        p.style.transition = 'none';
+        p.style.strokeDasharray = '';
+        p.style.strokeDashoffset = '';
+      });
+    }, DUR + 200);
   }
 
   const engine = {

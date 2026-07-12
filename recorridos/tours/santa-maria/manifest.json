@@ -57,8 +57,9 @@
       "src": "assets/360/pano-01.jpg",
       "initialView": { "yaw": 0, "pitch": -8, "fov": 70 },
       "northOffset": 220,
+      "intro": "littlePlanet",
       "hotspots": [
-        { "id": "p01-nav-02", "type": "nav", "position": { "yaw": -35, "pitch": -22 }, "target": "pano-02", "label": "Hacia la bodega" },
+        { "id": "p01-nav-02", "type": "nav", "position": { "yaw": -35, "pitch": -22 }, "target": "pano-02", "label": "Hacia la bodega", "icon": "casa" },
         { "id": "p01-nav-03", "type": "nav", "position": { "yaw": 145, "pitch": -18 }, "target": "pano-03", "label": "Vista del entorno" }
       ]
     },
@@ -75,7 +76,8 @@
           "content": {
             "title": "Bodega Santa María",
             "html": "<p>Nave industrial techada de arco, con amplio interior, andén de carga y acceso directo desde la avenida.</p><p>Entra al recorrido interior para conocerla por dentro.</p>",
-            "media": { "kind": "image", "src": "assets/thumbs/pano-05.jpg" }
+            "media": { "kind": "image", "src": "assets/thumbs/pano-05.jpg" },
+            "gallery": ["assets/thumbs/pano-06.jpg", "assets/thumbs/pano-07.jpg"]
           } },
         { "id": "p02-poly-bodega", "type": "polygon",
           "positions": [
@@ -90,6 +92,9 @@
             "title": "Predio de la bodega",
             "html": "<p>Terreno de ≈1,600 m² delimitado sobre la vista aérea: 84 m y 67 m de fondo, frente de 30 m sobre la avenida y acceso posterior de 22 m.</p>"
           } },
+        { "id": "p02-dl-planta", "type": "download", "position": { "yaw": 28, "pitch": -26 },
+          "src": "assets/plan/planta.jpg", "label": "Descargar planta del sitio",
+          "filename": "planta-santa-maria.jpg", "icon": "documento" },
         { "id": "p02-nav-05", "type": "nav", "position": { "yaw": -18, "pitch": -32 }, "target": "pano-05", "label": "Entrar a la bodega" },
         { "id": "p02-nav-01", "type": "nav", "position": { "yaw": 168, "pitch": -14 }, "target": "pano-01", "label": "Cruce principal" },
         { "id": "p02-nav-04", "type": "nav", "position": { "yaw": 75, "pitch": -14 }, "target": "pano-04", "label": "Zona comercial" }
@@ -214,7 +219,7 @@
       "type": "potree",
       "id": "nube-agua-blanca",
       "title": "Nube de puntos · Agua Blanca",
-      "thumbnail": "assets/thumbs/pano-01.jpg",
+      "thumbnail": "assets/thumbs/nube-agua-blanca.jpg",
       "cloud": {
         "path": "/assets/_potree/clouds/agua-blanca-veg/metadata.json",
         "pointBudget": 1500000,
@@ -232,7 +237,7 @@
       "type": "ortho",
       "id": "ortho-agua-blanca",
       "title": "Ortofoto · Agua Blanca",
-      "thumbnail": "assets/thumbs/pano-01.jpg",
+      "thumbnail": "assets/thumbs/ortho-agua-blanca.jpg",
       "tiles": {
         "url": "/assets/_potree/clouds/agua-blanca/ortho_tiles/{z}/{x}/{y}.png",
         "tms": true,
@@ -266,7 +271,7 @@
       "type": "splat",
       "id": "splat-bodega",
       "title": "Bodega 3D inmersiva",
-      "thumbnail": "assets/thumbs/pano-05.jpg",
+      "thumbnail": "assets/thumbs/splat-bodega.jpg",
       "src": null
     }
   ],

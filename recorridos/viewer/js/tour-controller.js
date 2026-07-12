@@ -23,14 +23,29 @@ const ENGINE_MODULES = {
   splat: () => import('./engines/engine-splat.js'),
 };
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+// sleep abortable: con señal, resuelve temprano al abortar (nunca rechaza —
+// quien espera chequea signal.aborted). Sin señal, es el sleep de siempre.
+const sleep = (ms, signal) => new Promise(resolve => {
+  if (signal?.aborted) return resolve();
+  const t = setTimeout(done, ms);
+  function done() {
+    clearTimeout(t);
+    signal?.removeEventListener('abort', done);
+    resolve();
+  }
+  signal?.addEventListener('abort', done, { once: true });
+});
 
 export class TourController {
-  constructor({ tourUrl, debug = false }) {
+  constructor({ tourUrl, debug = false, embed = null, kiosk = false }) {
     this.tourUrl = tourUrl;
     this.baseUrl = tourUrl.slice(0, tourUrl.lastIndexOf('/') + 1);
     this.debug = debug;
-    this.embedded = window !== window.top;
+    // embed override (?embed=0|1) gana sobre la auto-detección: el preview del
+    // Studio es un iframe pero debe comportarse standalone
+    this.embedded = embed ?? (window !== window.top);
+    // ?kiosk=1 = pantalla limpia sin editar el manifest (OR con manifest.ui.kiosk)
+    this.kioskParam = kiosk;
     this.isMobile = matchMedia('(pointer: coarse)').matches;
     this.reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -42,6 +57,10 @@ export class TourController {
     this._navToken = 0;
     this._listeners = new Map();
     this._autopilot = null;
+    // interacción del usuario DENTRO del iframe de la nube (postMessage
+    // 'interact' → engine-potree) — el pointerdown de allá no llega a este
+    // document, por eso cruza como evento del bus
+    this.on('potree-interact', () => this.stopAutopilot());
   }
 
   /* ---------- eventos internos (chrome / hud) ---------- */
@@ -58,7 +77,10 @@ export class TourController {
   /* ---------- assets ---------- */
   resolveAsset(p) {
     if (!p) return p;
-    return p.startsWith('/') || /^https?:/.test(p) ? p : this.baseUrl + p;
+    // blob:/data: pasan INTACTOS — el preview del Studio reescribe los assets
+    // a object URLs (modo carpeta real) y anteponerles baseUrl los rompía
+    // (review adversarial P3, recuperado del refutador caído)
+    return p.startsWith('/') || /^(https?|blob|data):/.test(p) ? p : this.baseUrl + p;
   }
 
   /* ---------- boot ---------- */
@@ -133,6 +155,7 @@ export class TourController {
       manifest: this.manifest,
       resolveAsset: p => this.resolveAsset(p),
       isMobile: this.isMobile,
+      embedded: this.embedded,
       reducedMotion: this.reducedMotion,
       debug: this.debug,
       emit: (ev, payload) => this.emit(ev, payload),
@@ -152,10 +175,11 @@ export class TourController {
   }
 
   /* ---------- navegación ---------- */
-  async goTo(id, { fromHistory = false, instant = false } = {}) {
+  async goTo(id, { fromHistory = false, instant = false, force = false } = {}) {
     const scene = this.manifest.byId.get(id);
     if (!scene) { console.warn(`[recorridos] escena "${id}" no existe`); return; }
-    if (this.currentScene?.id === id) return;
+    // force: remontar la escena actual (recuperación tras un fallo de carga)
+    if (this.currentScene?.id === id && !force) return;
 
     const token = ++this._navToken;
     const fade = document.getElementById('fade-layer');
@@ -172,16 +196,29 @@ export class TourController {
     }
 
     let engine;
+    // Carga lenta (nube grande, red pobre): avisar en vez de dejar el fade mudo.
+    const slowTimer = setTimeout(() => {
+      if (token === this._navToken) this.emit('scene-loading', { scene });
+    }, 2500);
     try {
       engine = await this.engineFor(scene.type);
       if (token !== this._navToken) return;
       if (this.currentEngine && this.currentEngine !== engine) this.currentEngine.hide();
       this._showContainer(scene.type);
-      await engine.show(scene, this.viewState.get(id) || null);
+      // boot: SOLO la escena de arranque puede disparar su intro (littlePlanet).
+      // instant=true únicamente en el goTo del boot — el flag viaja al engine;
+      // sin él, el intro corría en la PRIMERA pano mostrada aunque fuera a
+      // mitad del tour (engine perezoso — review adversarial P3).
+      await engine.show(scene, this.viewState.get(id) || null, { boot: instant });
     } catch (err) {
       console.error(`[recorridos] error mostrando escena "${id}":`, err);
       fade.classList.remove('is-active');
+      // El chrome ofrece Reintentar/Volver; el estado interno queda en la
+      // escena anterior (consistente: force permite remontar cualquiera).
+      if (token === this._navToken) this.emit('scene-error', { scene, error: err });
       throw err;
+    } finally {
+      clearTimeout(slowTimer);
     }
     if (token !== this._navToken) return;
 
@@ -199,32 +236,66 @@ export class TourController {
   async startAutopilot() {
     const cfg = this.manifest.autopilot;
     if (!cfg?.enabled || !cfg.steps?.length || this._autopilot) return;
-    const run = { stop: false };
-    this._autopilot = run;
+    const ac = new AbortController();
+    const signal = ac.signal;
+    this._autopilot = { ac };
     this.emit('autopilot', { running: true });
 
-    const cancel = () => this.stopAutopilot();
-    document.addEventListener('pointerdown', cancel, { capture: true, once: true });
+    // Cualquier interacción del visitante cancela AL INSTANTE (la señal corta
+    // el dwell y la animación en vuelo). Se excluye el propio botón/chip de
+    // autopilot: su click es un toggle — cancelarle aquí lo re-arrancaría.
+    const cancelPointer = e => {
+      if (e.target?.closest?.('#btn-autopilot, #autopilot-chip')) return;
+      this.stopAutopilot();
+    };
+    const NAV_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                      'PageUp', 'PageDown', '+', '-', 'Escape'];
+    const cancelKeys = e => { if (NAV_KEYS.includes(e.key)) this.stopAutopilot(); };
+    const cancelWheel = () => this.stopAutopilot();
+    document.addEventListener('pointerdown', cancelPointer, { capture: true });
+    document.addEventListener('keydown', cancelKeys, { capture: true });
+    document.addEventListener('wheel', cancelWheel, { capture: true, passive: true });
 
     try {
-      for (const step of cfg.steps) {
-        if (run.stop) break;
+      for (let i = 0; i < cfg.steps.length; i++) {
+        const step = cfg.steps[i];
+        if (signal.aborted) break;
+        this.emit('autopilot-step', { index: i, total: cfg.steps.length });
         await this.goTo(step.sceneId);
-        if (run.stop) break;
-        if (step.lookAt && this.currentEngine?.animateTo) {
-          await this.currentEngine.animateTo(step.lookAt, { speed: '6rpm' });
+        if (signal.aborted) break;
+        // si la escena fue podada o falló, goTo no navegó — no animar la equivocada
+        if (step.lookAt && this.currentEngine?.animateTo &&
+            this.currentScene?.id === step.sceneId) {
+          await this.currentEngine.animateTo(step.lookAt, { speed: '6rpm', signal });
         }
-        if (run.stop) break;
-        await sleep((step.dwell ?? 4) * 1000);
+        if (signal.aborted) break;
+        await sleep((step.dwell ?? 4) * 1000, signal);
       }
+    } catch (e) {
+      // una escena falló durante el tour: scene-error ya avisó al usuario;
+      // el autopilot se detiene sin reventar el handler del botón
+      console.warn('[recorridos] autopilot detenido por fallo de escena:', e?.message || e);
     } finally {
-      document.removeEventListener('pointerdown', cancel, { capture: true });
-      this._autopilot = null;
+      document.removeEventListener('pointerdown', cancelPointer, { capture: true });
+      document.removeEventListener('keydown', cancelKeys, { capture: true });
+      document.removeEventListener('wheel', cancelWheel, { capture: true });
+      // solo limpiar si sigue siendo NUESTRO run (stopAutopilot pudo nulearlo ya,
+      // o un nuevo autopilot pudo tomar el relevo durante el unwind)
+      if (this._autopilot?.ac === ac) this._autopilot = null;
       this.emit('autopilot', { running: false });
     }
   }
 
   stopAutopilot() {
-    if (this._autopilot) this._autopilot.stop = true;
+    const ap = this._autopilot;
+    if (!ap) return;
+    // Nulear YA: autopilotRunning=false al instante → el chip se oculta y el
+    // botón se resetea aunque un goTo siga en vuelo (nube tarda hasta 45 s).
+    // Sin esto el usuario "cancela y el tour igual lo arrastra a la escena"
+    // (review adversarial P2). La señal corta dwell/animateTo; el goTo en
+    // curso completa pero el loop sale en su próximo check de signal.aborted.
+    this._autopilot = null;
+    ap.ac.abort();
+    this.emit('autopilot', { running: false });
   }
 }

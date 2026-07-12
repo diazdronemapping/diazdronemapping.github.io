@@ -17,9 +17,18 @@
 /* Esquinas de controles: librar el chrome del viewer
    (menu-toggle en bottom-right · rc-controls en bottom-left · plan-widget
    280px de ancho en top-right → el control de capas va a su izquierda) */
-.rc-engine--ortho .leaflet-bottom.leaflet-right { margin-bottom: 56px; }
-.rc-engine--ortho .leaflet-bottom.leaflet-left { margin-left: 56px; }
+.rc-engine--ortho .leaflet-bottom.leaflet-right {
+  margin-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+.rc-engine--ortho .leaflet-bottom.leaflet-left {
+  margin-left: calc(56px + env(safe-area-inset-left, 0px));
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
 .rc-engine--ortho .leaflet-top.leaflet-right { margin-top: 74px; margin-right: 296px; }
+@media (max-width: 768px) {
+  /* en móvil el plan-widget es más angosto (200px) — recuperar espacio */
+  .rc-engine--ortho .leaflet-top.leaflet-right { margin-top: 64px; margin-right: 216px; }
+}
 
 /* Zoom (y cualquier .leaflet-bar) en dark */
 .rc-engine--ortho .leaflet-bar { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); }
@@ -38,17 +47,25 @@
   color: #666;
 }
 
-/* Control de capas (toggle de curvas de nivel) */
-.rc-engine--ortho .leaflet-control-layers {
-  background: rgba(26, 26, 26, 0.92);
-  color: #EAEAEA;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 10px;
+/* Toggles de overlays propios (curvas de nivel, etc.) — chips con label
+   visible, estilo del chrome del viewer (valores crudos: este CSS también
+   carga en el Studio, donde las variables --rc-* no existen) */
+.rc-ortho-toggles { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.rc-ortho-toggle {
+  min-height: 44px; padding: 0 16px;
+  border: 1px solid #333333; border-radius: 8px;
+  background: rgba(26, 26, 26, 0.82); color: #FFFFFF;
+  font: 13px var(--rc-font-body, 'Work Sans', 'Segoe UI', sans-serif);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: border-color 200ms, color 200ms, background 200ms;
 }
-.rc-engine--ortho .leaflet-control-layers-toggle { filter: invert(0.85); }
-.rc-engine--ortho .leaflet-control-layers label { font-size: 13px; }
-.rc-engine--ortho .leaflet-control-layers input { accent-color: #7BC142; }
+.rc-ortho-toggle:hover { border-color: #7BC142; color: #7BC142; }
+.rc-ortho-toggle.is-on {
+  border-color: #7BC142; color: #7BC142; background: rgba(123, 193, 66, 0.1);
+}
+.rc-ortho-toggle:focus-visible { outline: 2px solid #7BC142; outline-offset: 2px; }
 
 /* Attribution (Esri la exige) — discreta pero visible */
 .rc-engine--ortho .leaflet-control-attribution {
