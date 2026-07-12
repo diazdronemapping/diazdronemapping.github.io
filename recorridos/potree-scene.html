@@ -725,9 +725,27 @@
       // IFRAME → PADRE: source 'potree-state' · ready / view / tool
       // PADRE → IFRAME: source 'potree-ctrl'  · setView / getView / setBudget /
       //                 tool / stoptool / clear (+ extensiones color, density)
+      // ── Origins (F2-L1): primer embed cross-origin real (viewer en
+      // recorridos.dronemapping.mx, esta página en presentacion). Solo se
+      // habla con padres de la allowlist; standalone (sin padre) → noop.
+      var PARENT_ALLOWED = [location.origin,
+                            'https://recorridos.dronemapping.mx',
+                            'https://presentacion.dronemapping.mx'];
+      function allowedOrigin(o) {
+        return PARENT_ALLOWED.indexOf(o) !== -1 ||
+               /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);
+      }
+      var PARENT_ORIGIN = (function () {
+        try {
+          if (window === window.parent) return null;   // standalone
+          var o = new URL(document.referrer).origin;   // strict-origin-when-cross-origin conserva el origin
+          return allowedOrigin(o) ? o : null;
+        } catch (e) { return null; }
+      })();
       function post(msg) {
-        try { parent.postMessage(Object.assign({ source: 'potree-state' }, msg), '*'); }
-        catch (e) { /* sin padre (standalone) — noop */ }
+        if (!PARENT_ORIGIN) return; // standalone o padre fuera de la allowlist
+        try { parent.postMessage(Object.assign({ source: 'potree-state' }, msg), PARENT_ORIGIN); }
+        catch (e) { /* noop */ }
       }
 
       // Interacción del usuario dentro de la nube → 'interact' al padre (sus
@@ -784,6 +802,7 @@
       var toolApi = null, colorApi = null;
 
       window.addEventListener('message', function (e) {
+        if (!allowedOrigin(e.origin)) return; // F2-L1: comandos solo de la allowlist
         var d = e.data;
         if (!d || d.source !== 'potree-ctrl') return;
         switch (d.action) {
