@@ -37,7 +37,7 @@
     revealItems.forEach((item) => revealObserver.observe(item));
   }
 
-  // RGB / elevation wipe. A native range keeps mouse, touch and keyboard parity.
+  // RGB / elevation wipe. The native range covers the image for mouse, touch and keyboard parity.
   const wipeRange = document.querySelector("#wipeRange");
   const wipeStage = document.querySelector(".wipe__stage");
   const wipeOutput = document.querySelector("#wipeOutput");
@@ -47,12 +47,52 @@
     const rgb = Number(wipeRange.value);
     const elevation = 100 - rgb;
     wipeStage.style.setProperty("--split", `${rgb}%`);
-    wipeOutput.value = `${rgb} / ${elevation}`;
+    wipeOutput.value = `${rgb}% RGB · ${elevation}% elevación`;
     wipeRange.setAttribute("aria-valuetext", `${rgb} por ciento RGB y ${elevation} por ciento elevación`);
+    wipeStage.classList.add("has-dragged");
   };
 
   wipeRange?.addEventListener("input", updateWipe);
-  updateWipe();
+  wipeRange?.addEventListener("pointerdown", () => wipeStage?.classList.add("has-dragged"), { once: true });
+  wipeRange?.addEventListener("keydown", (event) => {
+    if (["ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"].includes(event.key)) {
+      wipeStage?.classList.add("has-dragged");
+    }
+  });
+
+  let wipePointer = null;
+  const updateWipeFromPointer = (event) => {
+    if (!wipeRange || !wipeStage) return;
+    const bounds = wipeStage.getBoundingClientRect();
+    const ratio = (event.clientX - bounds.left) / bounds.width;
+    wipeRange.value = String(Math.round(Math.min(1, Math.max(0, ratio)) * 100));
+    updateWipe();
+  };
+
+  wipeStage?.addEventListener("pointerdown", (event) => {
+    if (!event.isPrimary) return;
+    wipePointer = event.pointerId;
+    wipeStage.setPointerCapture?.(event.pointerId);
+    updateWipeFromPointer(event);
+  });
+  wipeStage?.addEventListener("pointermove", (event) => {
+    if (wipePointer !== event.pointerId) return;
+    updateWipeFromPointer(event);
+  });
+  const finishWipe = (event) => {
+    if (wipePointer !== event.pointerId) return;
+    wipePointer = null;
+    if (wipeStage?.hasPointerCapture?.(event.pointerId)) wipeStage.releasePointerCapture(event.pointerId);
+  };
+  wipeStage?.addEventListener("pointerup", finishWipe);
+  wipeStage?.addEventListener("pointercancel", finishWipe);
+
+  if (wipeRange && wipeStage && wipeOutput) {
+    const rgb = Number(wipeRange.value);
+    const elevation = 100 - rgb;
+    wipeStage.style.setProperty("--split", `${rgb}%`);
+    wipeOutput.value = `${rgb}% RGB · ${elevation}% elevación`;
+  }
 
   // Accessible tab-carousel: click, arrow keys and previous/next controls share one state.
   const tabs = [...document.querySelectorAll(".view-tabs [role='tab']")];
@@ -85,6 +125,11 @@
     viewCaption.textContent = selected.dataset.caption || "";
     if (galleryCount) galleryCount.textContent = `${String(activeView + 1).padStart(2, "0")} / ${String(tabs.length).padStart(2, "0")}`;
     if (moveFocus) selected.focus();
+    const tabList = selected.parentElement;
+    tabList?.scrollTo({
+      left: selected.offsetLeft - ((tabList.clientWidth - selected.offsetWidth) / 2),
+      behavior: reduceMotion ? "auto" : "smooth"
+    });
 
     if (viewImage.complete) {
       viewStage.classList.remove("is-loading");
@@ -115,53 +160,51 @@
   galleryPrev?.addEventListener("click", () => selectView(activeView - 1));
   galleryNext?.addEventListener("click", () => selectView(activeView + 1));
 
-  // Potree is injected only after explicit consent. The iframe is never created twice.
-  const viewerShell = document.querySelector("#viewerShell");
-  const loadViewerButton = document.querySelector("#loadViewer");
-  const viewerStatus = document.querySelector("#viewerStatus");
-  const viewerError = document.querySelector("#viewerError");
-  let viewerTimeout;
+  // The large gallery also supports a horizontal swipe without blocking vertical page scroll.
+  let swipePointer = null;
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeLastX = 0;
+  let swipeLastY = 0;
 
-  const setViewerError = () => {
-    if (!viewerShell || !viewerStatus || !viewerError) return;
-    viewerShell.dataset.state = "error";
-    viewerStatus.textContent = "";
-    viewerError.hidden = false;
+  const completeSwipe = (endX, endY) => {
+    const deltaX = endX - swipeStartX;
+    const deltaY = endY - swipeStartY;
+    swipePointer = null;
+
+    if (Math.abs(deltaX) < 34 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return;
+    selectView(activeView + (deltaX < 0 ? 1 : -1));
   };
 
-  loadViewerButton?.addEventListener("click", () => {
-    if (!viewerShell || viewerShell.dataset.activated === "true") return;
-    viewerShell.dataset.activated = "true";
-    viewerShell.dataset.state = "loading";
-    loadViewerButton.disabled = true;
-    loadViewerButton.innerHTML = "<span aria-hidden='true'>···</span> Cargando visor";
-    if (viewerStatus) viewerStatus.textContent = "Preparando experiencia 3D…";
+  viewStage?.addEventListener("pointerdown", (event) => {
+    if (!event.isPrimary || event.target.closest("button")) return;
+    if (event.pointerType === "mouse") event.preventDefault();
+    swipePointer = event.pointerId;
+    viewStage.setPointerCapture?.(event.pointerId);
+    swipeStartX = event.clientX;
+    swipeStartY = event.clientY;
+    swipeLastX = event.clientX;
+    swipeLastY = event.clientY;
+  });
 
-    if (!navigator.onLine) {
-      setViewerError();
-      return;
-    }
+  viewStage?.addEventListener("pointermove", (event) => {
+    if (swipePointer !== event.pointerId) return;
+    swipeLastX = event.clientX;
+    swipeLastY = event.clientY;
+  });
 
-    const frame = document.createElement("iframe");
-    frame.title = "Visor 3D de nube de puntos de un terreno boscoso";
-    frame.src = "https://recorridos.dronemapping.mx/demo/terreno-boscoso/";
-    frame.loading = "lazy";
-    frame.referrerPolicy = "strict-origin-when-cross-origin";
-    frame.allow = "fullscreen";
-    frame.setAttribute("allowfullscreen", "");
-    frame.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-popups allow-downloads allow-pointer-lock");
+  viewStage?.addEventListener("pointerup", (event) => {
+    if (swipePointer !== event.pointerId) return;
+    completeSwipe(event.clientX, event.clientY);
+    if (viewStage.hasPointerCapture?.(event.pointerId)) viewStage.releasePointerCapture(event.pointerId);
+  });
 
-    frame.addEventListener("load", () => {
-      window.clearTimeout(viewerTimeout);
-      viewerShell.dataset.state = "ready";
-      if (viewerStatus) viewerStatus.textContent = "Visor 3D listo";
-      if (viewerError) viewerError.hidden = true;
-    }, { once: true });
+  viewStage?.addEventListener("pointercancel", () => {
+    if (swipePointer === null) return;
+    completeSwipe(swipeLastX, swipeLastY);
+  });
 
-    frame.addEventListener("error", setViewerError, { once: true });
-    viewerShell.append(frame);
-    viewerTimeout = window.setTimeout(setViewerError, 15000);
-  }, { once: true });
+  if (viewImage) viewImage.draggable = false;
 
   const year = document.querySelector("[data-year]");
   if (year) year.textContent = String(new Date().getFullYear());

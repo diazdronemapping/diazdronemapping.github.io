@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b0d0b">
-  <meta name="description" content="Caso de estudio de levantamiento aéreo en un terreno boscoso de la Sierra de Hidalgo: ortomosaico, elevación, MDE, curvas de nivel y nube de puntos interactiva.">
+  <meta name="description" content="Caso de estudio de levantamiento aéreo en un terreno boscoso de la Sierra de Hidalgo: ortomosaico, elevación, MDE y curvas de nivel.">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="canonical" href="https://presentacion.dronemapping.mx/portafolio/levantamiento-aereo-terreno-boscoso/">
 
@@ -12,13 +12,13 @@
   <meta property="og:locale" content="es_MX">
   <meta property="og:site_name" content="Drone Mapping">
   <meta property="og:title" content="Levantamiento aéreo en terreno boscoso">
-  <meta property="og:description" content="De una ladera arbolada a una lectura técnica clara: superficie, relieve y contexto en una experiencia navegable.">
+  <meta property="og:description" content="De una ladera arbolada a una lectura técnica clara: superficie, relieve y contexto en una presentación visual.">
   <meta property="og:url" content="https://presentacion.dronemapping.mx/portafolio/levantamiento-aereo-terreno-boscoso/">
   <meta property="og:image" content="https://presentacion.dronemapping.mx/portafolio/levantamiento-aereo-terreno-boscoso/assets/hero-ortho.webp">
   <meta property="og:image:alt" content="Vista aérea de un terreno boscoso procesado como ortomosaico">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Levantamiento aéreo en terreno boscoso">
-  <meta name="twitter:description" content="Caso de estudio: del vuelo a una lectura técnica navegable.">
+  <meta name="twitter:description" content="Caso de estudio: del vuelo a una lectura técnica clara.">
   <meta name="twitter:image" content="https://presentacion.dronemapping.mx/portafolio/levantamiento-aereo-terreno-boscoso/assets/hero-ortho.webp">
 
   <title>Levantamiento aéreo en terreno boscoso | Drone Mapping</title>
@@ -56,9 +56,9 @@
       <span class="brand__name">Drone Mapping</span>
     </a>
     <nav class="site-nav" aria-label="Secciones del caso">
-      <a href="#vistas">Vistas</a>
+      <a href="#caso">Caso</a>
+      <a href="#vistas">Comparador</a>
       <a href="#entregables">Entregables</a>
-      <a href="#visor">Visor 3D</a>
       <a href="#contacto">Contacto</a>
     </nav>
   </header>
@@ -82,7 +82,7 @@
       <div class="hero__content">
         <p class="eyebrow">Caso de estudio · Topografía aérea</p>
         <h1 id="hero-title">Levantamiento aéreo<br>en terreno boscoso</h1>
-        <p class="hero__lead">De una ladera arbolada a una lectura técnica clara: superficie, relieve y contexto reunidos en una experiencia navegable.</p>
+        <p class="hero__lead">De una ladera arbolada a una lectura técnica clara: superficie, relieve y contexto reunidos en una presentación visual.</p>
         <p class="hero__place">
           <span aria-hidden="true">●</span>
           Sierra de Hidalgo
@@ -151,12 +151,17 @@
           <div class="wipe__line" aria-hidden="true"><span></span></div>
           <span class="wipe__label wipe__label--left">RGB</span>
           <span class="wipe__label wipe__label--right">Elevación</span>
+          <input class="wipe__scrubber" id="wipeRange" type="range" min="0" max="100" value="52"
+            aria-label="Comparar vista RGB y elevación"
+            aria-describedby="wipe-caption"
+            aria-valuetext="52 por ciento RGB y 48 por ciento elevación">
+          <div class="wipe__hint" aria-hidden="true">
+            <span>↔</span>
+            <strong>Arrastra sobre la imagen</strong>
+            <output for="wipeRange" id="wipeOutput">52% RGB · 48% elevación</output>
+          </div>
         </div>
-        <figcaption id="wipe-caption" class="wipe__controls">
-          <label for="wipeRange">Mover división</label>
-          <input id="wipeRange" type="range" min="0" max="100" value="52" aria-valuetext="52 por ciento RGB y 48 por ciento elevación">
-          <output for="wipeRange" id="wipeOutput">52 / 48</output>
-        </figcaption>
+        <figcaption id="wipe-caption" class="wipe__caption">Arrastra el tirador sobre la imagen; también puedes usar las flechas del teclado cuando el comparador tenga el foco.</figcaption>
       </figure>
 
       <div class="view-gallery reveal" data-reveal aria-labelledby="gallery-title">
@@ -165,13 +170,13 @@
             <p class="kicker">Capas del estudio</p>
             <h3 id="gallery-title">Cambia la forma de mirar.</h3>
           </div>
-          <div class="gallery-arrows" aria-label="Navegar por las vistas">
-            <button class="icon-button" type="button" id="galleryPrev" aria-label="Vista anterior">←</button>
+          <div class="gallery-status">
             <span id="galleryCount" aria-live="polite">01 / 04</span>
-            <button class="icon-button" type="button" id="galleryNext" aria-label="Vista siguiente">→</button>
+            <span>Usa las flechas o desliza la imagen</span>
           </div>
         </div>
 
+        <p class="view-tabs-hint" aria-hidden="true">4 vistas disponibles · desliza las pestañas →</p>
         <div class="view-tabs" role="tablist" aria-label="Tipo de vista">
           <button id="tab-rgb" role="tab" aria-selected="true" aria-controls="view-stage" tabindex="0"
             data-src="assets/view-rgb.webp"
@@ -193,6 +198,8 @@
 
         <figure class="view-stage media-shell" id="view-stage" role="tabpanel" aria-labelledby="tab-rgb" data-error="Esta vista no pudo cargarse">
           <img id="viewImage" src="assets/view-rgb.webp" alt="Ortomosaico RGB del terreno boscoso" width="1800" height="1125" loading="lazy">
+          <button class="view-stage__nav view-stage__nav--prev" type="button" id="galleryPrev" aria-label="Mostrar vista anterior">←</button>
+          <button class="view-stage__nav view-stage__nav--next" type="button" id="galleryNext" aria-label="Mostrar vista siguiente">→</button>
           <figcaption>
             <span id="viewLabel">RGB</span>
             <p id="viewCaption">Texturas, vegetación y elementos visibles en su contexto.</p>
@@ -205,7 +212,7 @@
       <div class="section-index" aria-hidden="true">03 / Entregables</div>
       <div class="deliverables__intro reveal" data-reveal>
         <p class="kicker">Información que se entiende</p>
-        <h2 id="deliverables-title">Del vuelo a una entrega que se puede recorrer.</h2>
+        <h2 id="deliverables-title">Del vuelo a una entrega que se puede interpretar.</h2>
         <p>No se trata de acumular archivos. Se trata de presentar cada lectura en el formato que mejor explica el terreno.</p>
       </div>
 
@@ -237,14 +244,14 @@
         </article>
 
         <article class="deliverable-card reveal" data-reveal>
-          <div class="deliverable-card__media media-shell" data-error="Vista de nube de puntos no disponible">
-            <img src="assets/deliverable-pointcloud.webp" alt="Nube de puntos tridimensional del terreno" width="1000" height="1000" loading="lazy">
+          <div class="deliverable-card__media media-shell" data-error="Vista de curvas de nivel no disponible">
+            <img src="assets/view-curves.webp" alt="Curvas de nivel representadas sobre el terreno" width="1600" height="1000" loading="lazy">
           </div>
           <div class="deliverable-card__copy">
             <span>03</span>
             <div>
-              <h3>Nube de puntos</h3>
-              <p>25,131,914 puntos procesados disponibles como lectura tridimensional.</p>
+              <h3>Curvas de nivel</h3>
+              <p>Intervalo de 0.50 m para reconocer pendientes y cambios de forma del terreno.</p>
             </div>
           </div>
         </article>
@@ -252,37 +259,8 @@
       <p class="deliverables__footnote">Muestras preparadas para portafolio. No contienen descargas ni referencias privadas.</p>
     </section>
 
-    <section class="viewer-section section-pad section-dark" id="visor" aria-labelledby="viewer-title">
-      <div class="section-index" aria-hidden="true">04 / Visor 3D</div>
-      <div class="viewer-section__intro reveal" data-reveal>
-        <div>
-          <p class="kicker">Nube de puntos interactiva</p>
-          <h2 id="viewer-title">Entra al terreno.<br>Sin instalar nada.</h2>
-        </div>
-        <p>Gira, acerca y cambia el modo de representación desde el navegador. La demostración está preparada específicamente para portafolio.</p>
-      </div>
-
-      <div class="viewer-shell reveal" id="viewerShell" data-reveal data-state="idle">
-        <img class="viewer-shell__poster" src="assets/deliverable-pointcloud.webp" alt="Vista previa de la nube de puntos interactiva" width="1800" height="1000" loading="lazy">
-        <div class="viewer-shell__shade" aria-hidden="true"></div>
-        <div class="viewer-shell__action">
-          <p class="viewer-shell__eyebrow">Experiencia WebGL · Carga bajo demanda</p>
-          <button class="play-button" id="loadViewer" type="button">
-            <span aria-hidden="true">↗</span>
-            Activar visor 3D
-          </button>
-          <p class="viewer-shell__hint">El visor se cargará una sola vez al activarlo.</p>
-        </div>
-        <div class="viewer-shell__status" id="viewerStatus" role="status" aria-live="polite"></div>
-        <div class="viewer-shell__error" id="viewerError" role="alert" hidden>
-          <p>El visor no respondió en esta ventana.</p>
-          <a href="https://recorridos.dronemapping.mx/demo/terreno-boscoso/" target="_blank" rel="noopener noreferrer">Abrir la experiencia en una pestaña nueva ↗</a>
-        </div>
-      </div>
-    </section>
-
     <section class="method section-pad" id="metodo" aria-labelledby="method-title">
-      <div class="section-index" aria-hidden="true">05 / Método</div>
+      <div class="section-index" aria-hidden="true">04 / Método</div>
       <div class="method__heading reveal" data-reveal>
         <p class="kicker">De campo a pantalla</p>
         <h2 id="method-title">Cómo construimos la lectura.</h2>
@@ -305,14 +283,14 @@
         </li>
         <li class="reveal" data-reveal>
           <span>04</span>
-          <h3>Entrega navegable</h3>
+          <h3>Entrega accesible</h3>
           <p>Los resultados se organizan para consulta en escritorio o celular.</p>
         </li>
       </ol>
     </section>
 
     <section class="film section-pad" aria-labelledby="film-title">
-      <div class="section-index" aria-hidden="true">06 / Síntesis</div>
+      <div class="section-index" aria-hidden="true">05 / Síntesis</div>
       <div class="film__heading reveal" data-reveal>
         <p class="kicker">Lectura integrada</p>
         <h2 id="film-title">El límite,<br>en contexto.</h2>
