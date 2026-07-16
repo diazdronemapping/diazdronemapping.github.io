@@ -740,6 +740,7 @@
   <script>
     window.addEventListener('load', function () {
 
+      const searchParams = new URLSearchParams(location.search);
       const sampleMode = true;
       const postSampleState = (action, detail = {}) => {
         if (sampleMode && window.parent !== window) {
