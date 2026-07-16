@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0d0b">
+  <meta name="description" content="Caso de estudio de levantamiento aéreo en un terreno boscoso de la Sierra de Hidalgo: ortomosaico, elevación, MDE, curvas de nivel y nube de puntos interactiva.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://presentacion.dronemapping.mx/portafolio/levantamiento-aereo-terreno-boscoso/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:locale" content="es_MX">
+  <meta property="og:site_name" content="Drone Mapping">
+  <meta property="og:title" content="Levantamiento aéreo en terreno boscoso">
+  <meta property="og:description" content="De una ladera arbolada a una lectura técnica clara: superficie, relieve y contexto en una experiencia navegable.">
+  <meta property="og:url" content="https://presentacion.dronemapping.mx/portafolio/levantamiento-aereo-terreno-boscoso/">
+  <meta property="og:image" content="https://presentacion.dronemapping.mx/portafolio/levantamiento-aereo-terreno-boscoso/assets/hero-ortho.webp">
+  <meta property="og:image:alt" content="Vista aérea de un terreno boscoso procesado como ortomosaico">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Levantamiento aéreo en terreno boscoso">
+  <meta name="twitter:description" content="Caso de estudio: del vuelo a una lectura técnica navegable.">
+  <meta name="twitter:image" content="https://presentacion.dronemapping.mx/portafolio/levantamiento-aereo-terreno-boscoso/assets/hero-ortho.webp">
+
+  <title>Levantamiento aéreo en terreno boscoso | Drone Mapping</title>
+  <link rel="preload" href="assets/fonts/Outfit-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/hero-ortho.webp" as="image" type="image/webp" fetchpriority="high">
+  <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    "name": "Levantamiento aéreo en terreno boscoso",
+    "description": "Caso de estudio de topografía aérea en un entorno boscoso de la Sierra de Hidalgo.",
+    "contentLocation": {
+      "@type": "Place",
+      "name": "Sierra de Hidalgo"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "Drone Mapping",
+      "url": "https://dronemapping.mx/"
+    },
+    "keywords": "levantamiento aéreo, nube de puntos, modelo de elevación, curvas de nivel, topografía aérea"
+  }
+  </script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <header class="site-header" aria-label="Navegación principal">
+    <a class="brand" href="#inicio" aria-label="Drone Mapping, regresar al inicio">
+      <span class="brand__mark media-shell" data-error="DM">
+        <img src="assets/logo.png" alt="" width="176" height="48">
+      </span>
+      <span class="brand__name">Drone Mapping</span>
+    </a>
+    <nav class="site-nav" aria-label="Secciones del caso">
+      <a href="#vistas">Vistas</a>
+      <a href="#entregables">Entregables</a>
+      <a href="#visor">Visor 3D</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+  </header>
+
+  <main id="contenido">
+    <section class="hero" id="inicio" aria-labelledby="hero-title">
+      <div class="hero__media media-shell" data-error="Vista aérea no disponible">
+        <img src="assets/hero-ortho.webp" alt="Vista aérea de un terreno boscoso procesado como ortomosaico" width="1920" height="1280" fetchpriority="high">
+      </div>
+      <div class="hero__scrim" aria-hidden="true"></div>
+      <svg class="hero__contours" viewBox="0 0 900 900" aria-hidden="true" focusable="false">
+        <path d="M-40 180C160 28 352 40 504 132s252 104 436 12"/>
+        <path d="M-34 244C154 92 338 98 482 186s254 112 458 24"/>
+        <path d="M-22 312C146 172 316 172 456 250s264 126 492 44"/>
+        <path d="M18 386c134-106 278-110 404-48s278 142 512 76"/>
+        <path d="M76 472c98-70 222-80 340-32s290 150 502 116"/>
+        <path d="M150 570c80-42 178-48 278-16s264 128 442 120"/>
+        <path d="M240 674c66-20 140-16 212 10s206 92 344 108"/>
+      </svg>
+
+      <div class="hero__content">
+        <p class="eyebrow">Caso de estudio · Topografía aérea</p>
+        <h1 id="hero-title">Levantamiento aéreo<br>en terreno boscoso</h1>
+        <p class="hero__lead">De una ladera arbolada a una lectura técnica clara: superficie, relieve y contexto reunidos en una experiencia navegable.</p>
+        <p class="hero__place">
+          <span aria-hidden="true">●</span>
+          Sierra de Hidalgo
+        </p>
+      </div>
+
+      <dl class="hero__metrics" aria-label="Cifras principales del caso">
+        <div>
+          <dt>Área documentada</dt>
+          <dd>≈ 0.40 ha</dd>
+        </div>
+        <div>
+          <dt>Puntos procesados</dt>
+          <dd>25,131,914</dd>
+        </div>
+        <div>
+          <dt>Resolución</dt>
+          <dd>1.76 cm/px</dd>
+        </div>
+        <div>
+          <dt>Curvas de nivel</dt>
+          <dd>0.50 m</dd>
+        </div>
+      </dl>
+
+      <a class="hero__scroll" href="#caso">
+        <span>Leer el caso</span>
+        <span aria-hidden="true">↓</span>
+      </a>
+    </section>
+
+    <section class="case-intro section-pad" id="caso" aria-labelledby="case-title">
+      <div class="section-index" aria-hidden="true">01 / Contexto</div>
+      <div class="case-intro__lead reveal" data-reveal>
+        <p class="kicker">El reto</p>
+        <h2 id="case-title">Leer un terreno que la vegetación vuelve difícil de interpretar.</h2>
+      </div>
+      <div class="case-intro__copy reveal" data-reveal>
+        <p>En un entorno boscoso, una fotografía aislada no explica pendientes, transiciones ni la relación entre los elementos visibles. El objetivo fue ordenar la información espacial en vistas complementarias que pudieran explorarse sin software especializado.</p>
+        <div class="result-note">
+          <span class="result-note__number" aria-hidden="true">↳</span>
+          <div>
+            <p class="kicker">El resultado</p>
+            <h3>Una base visual para decidir con contexto.</h3>
+            <p>El levantamiento se procesó como nube de puntos, ortomosaico, modelo de elevación y curvas de nivel. Las vistas se presentan juntas para comparar superficie visible, relieve y forma del terreno.</p>
+          </div>
+        </div>
+        <p class="privacy-note">Esta edición de portafolio omite referencias de identificación y archivos técnicos privados.</p>
+      </div>
+    </section>
+
+    <section class="comparison-section section-pad section-dark" id="vistas" aria-labelledby="compare-title">
+      <div class="section-index" aria-hidden="true">02 / Lecturas</div>
+      <div class="section-heading reveal" data-reveal>
+        <p class="kicker">Comparador interactivo</p>
+        <h2 id="compare-title">Un territorio.<br>Dos lecturas.</h2>
+        <p>Desliza para pasar de la textura RGB a la representación por elevación. La paleta amplifica cambios de altura sutiles; no altera los valores de origen.</p>
+      </div>
+
+      <figure class="wipe reveal" data-reveal aria-labelledby="wipe-caption">
+        <div class="wipe__stage media-shell" data-error="El comparador visual no está disponible">
+          <img class="wipe__image" src="assets/view-rgb.webp" alt="Vista RGB del terreno boscoso" width="1600" height="1000" loading="lazy">
+          <div class="wipe__overlay" aria-hidden="true">
+            <img class="wipe__image" src="assets/view-elevation.webp" alt="" width="1600" height="1000" loading="lazy">
+          </div>
+          <div class="wipe__line" aria-hidden="true"><span></span></div>
+          <span class="wipe__label wipe__label--left">RGB</span>
+          <span class="wipe__label wipe__label--right">Elevación</span>
+        </div>
+        <figcaption id="wipe-caption" class="wipe__controls">
+          <label for="wipeRange">Mover división</label>
+          <input id="wipeRange" type="range" min="0" max="100" value="52" aria-valuetext="52 por ciento RGB y 48 por ciento elevación">
+          <output for="wipeRange" id="wipeOutput">52 / 48</output>
+        </figcaption>
+      </figure>
+
+      <div class="view-gallery reveal" data-reveal aria-labelledby="gallery-title">
+        <div class="view-gallery__header">
+          <div>
+            <p class="kicker">Capas del estudio</p>
+            <h3 id="gallery-title">Cambia la forma de mirar.</h3>
+          </div>
+          <div class="gallery-arrows" aria-label="Navegar por las vistas">
+            <button class="icon-button" type="button" id="galleryPrev" aria-label="Vista anterior">←</button>
+            <span id="galleryCount" aria-live="polite">01 / 04</span>
+            <button class="icon-button" type="button" id="galleryNext" aria-label="Vista siguiente">→</button>
+          </div>
+        </div>
+
+        <div class="view-tabs" role="tablist" aria-label="Tipo de vista">
+          <button id="tab-rgb" role="tab" aria-selected="true" aria-controls="view-stage" tabindex="0"
+            data-src="assets/view-rgb.webp"
+            data-alt="Ortomosaico RGB del terreno boscoso"
+            data-caption="Texturas, vegetación y elementos visibles en su contexto.">RGB</button>
+          <button id="tab-elevation" role="tab" aria-selected="false" aria-controls="view-stage" tabindex="-1"
+            data-src="assets/view-elevation.webp"
+            data-alt="Representación del terreno coloreada por elevación"
+            data-caption="Color aplicado por cota para reconocer transiciones del relieve.">Elevación</button>
+          <button id="tab-mde" role="tab" aria-selected="false" aria-controls="view-stage" tabindex="-1"
+            data-src="assets/view-mde.webp"
+            data-alt="Modelo digital de elevación del área documentada"
+            data-caption="Lectura continua de la superficie derivada del levantamiento.">MDE</button>
+          <button id="tab-curves" role="tab" aria-selected="false" aria-controls="view-stage" tabindex="-1"
+            data-src="assets/view-curves.webp"
+            data-alt="Curvas de nivel superpuestas al terreno"
+            data-caption="Curvas cada 0.50 m para leer la forma del terreno.">Curvas</button>
+        </div>
+
+        <figure class="view-stage media-shell" id="view-stage" role="tabpanel" aria-labelledby="tab-rgb" data-error="Esta vista no pudo cargarse">
+          <img id="viewImage" src="assets/view-rgb.webp" alt="Ortomosaico RGB del terreno boscoso" width="1800" height="1125" loading="lazy">
+          <figcaption>
+            <span id="viewLabel">RGB</span>
+            <p id="viewCaption">Texturas, vegetación y elementos visibles en su contexto.</p>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="deliverables section-pad" id="entregables" aria-labelledby="deliverables-title">
+      <div class="section-index" aria-hidden="true">03 / Entregables</div>
+      <div class="deliverables__intro reveal" data-reveal>
+        <p class="kicker">Información que se entiende</p>
+        <h2 id="deliverables-title">Del vuelo a una entrega que se puede recorrer.</h2>
+        <p>No se trata de acumular archivos. Se trata de presentar cada lectura en el formato que mejor explica el terreno.</p>
+      </div>
+
+      <div class="deliverable-grid">
+        <article class="deliverable-card deliverable-card--wide reveal" data-reveal>
+          <div class="deliverable-card__media media-shell" data-error="Vista de límites no disponible">
+            <img src="assets/deliverable-boundary.webp" alt="Referencia gráfica del área documentada sobre el modelo de elevación" width="1400" height="900" loading="lazy">
+          </div>
+          <div class="deliverable-card__copy">
+            <span>01</span>
+            <div>
+              <h3>Vista de límites</h3>
+              <p>Referencia gráfica del área documentada sobre el levantamiento.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="deliverable-card reveal" data-reveal>
+          <div class="deliverable-card__media media-shell" data-error="Vista de secciones no disponible">
+            <img src="assets/deliverable-sections.webp" alt="Secciones visuales del terreno" width="1000" height="1000" loading="lazy">
+          </div>
+          <div class="deliverable-card__copy">
+            <span>02</span>
+            <div>
+              <h3>Secciones del terreno</h3>
+              <p>Cortes visuales para observar cambios de nivel a lo largo del sitio.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="deliverable-card reveal" data-reveal>
+          <div class="deliverable-card__media media-shell" data-error="Vista de nube de puntos no disponible">
+            <img src="assets/deliverable-pointcloud.webp" alt="Nube de puntos tridimensional del terreno" width="1000" height="1000" loading="lazy">
+          </div>
+          <div class="deliverable-card__copy">
+            <span>03</span>
+            <div>
+              <h3>Nube de puntos</h3>
+              <p>25,131,914 puntos procesados disponibles como lectura tridimensional.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+      <p class="deliverables__footnote">Muestras preparadas para portafolio. No contienen descargas ni referencias privadas.</p>
+    </section>
+
+    <section class="viewer-section section-pad section-dark" id="visor" aria-labelledby="viewer-title">
+      <div class="section-index" aria-hidden="true">04 / Visor 3D</div>
+      <div class="viewer-section__intro reveal" data-reveal>
+        <div>
+          <p class="kicker">Nube de puntos interactiva</p>
+          <h2 id="viewer-title">Entra al terreno.<br>Sin instalar nada.</h2>
+        </div>
+        <p>Gira, acerca y cambia el modo de representación desde el navegador. La demostración está preparada específicamente para portafolio.</p>
+      </div>
+
+      <div class="viewer-shell reveal" id="viewerShell" data-reveal data-state="idle">
+        <img class="viewer-shell__poster" src="assets/deliverable-pointcloud.webp" alt="Vista previa de la nube de puntos interactiva" width="1800" height="1000" loading="lazy">
+        <div class="viewer-shell__shade" aria-hidden="true"></div>
+        <div class="viewer-shell__action">
+          <p class="viewer-shell__eyebrow">Experiencia WebGL · Carga bajo demanda</p>
+          <button class="play-button" id="loadViewer" type="button">
+            <span aria-hidden="true">↗</span>
+            Activar visor 3D
+          </button>
+          <p class="viewer-shell__hint">El visor se cargará una sola vez al activarlo.</p>
+        </div>
+        <div class="viewer-shell__status" id="viewerStatus" role="status" aria-live="polite"></div>
+        <div class="viewer-shell__error" id="viewerError" role="alert" hidden>
+          <p>El visor no respondió en esta ventana.</p>
+          <a href="https://recorridos.dronemapping.mx/demo/terreno-boscoso/" target="_blank" rel="noopener noreferrer">Abrir la experiencia en una pestaña nueva ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="method section-pad" id="metodo" aria-labelledby="method-title">
+      <div class="section-index" aria-hidden="true">05 / Método</div>
+      <div class="method__heading reveal" data-reveal>
+        <p class="kicker">De campo a pantalla</p>
+        <h2 id="method-title">Cómo construimos la lectura.</h2>
+      </div>
+      <ol class="method__steps">
+        <li class="reveal" data-reveal>
+          <span>01</span>
+          <h3>Captura aérea</h3>
+          <p>Cobertura planificada para registrar textura y geometría visible del sitio.</p>
+        </li>
+        <li class="reveal" data-reveal>
+          <span>02</span>
+          <h3>Procesamiento</h3>
+          <p>Las imágenes se integran en una nube densa y superficies continuas.</p>
+        </li>
+        <li class="reveal" data-reveal>
+          <span>03</span>
+          <h3>Lecturas derivadas</h3>
+          <p>RGB, elevación, MDE y curvas se revisan como un mismo sistema.</p>
+        </li>
+        <li class="reveal" data-reveal>
+          <span>04</span>
+          <h3>Entrega navegable</h3>
+          <p>Los resultados se organizan para consulta en escritorio o celular.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="film section-pad" aria-labelledby="film-title">
+      <div class="section-index" aria-hidden="true">06 / Síntesis</div>
+      <div class="film__heading reveal" data-reveal>
+        <p class="kicker">Lectura integrada</p>
+        <h2 id="film-title">El límite,<br>en contexto.</h2>
+      </div>
+      <figure class="film__frame reveal" data-reveal>
+        <img src="assets/deliverable-boundary.webp" alt="Área de análisis representada sobre el modelo de elevación" width="1400" height="900" loading="lazy">
+        <figcaption><span>Superficie visible</span><strong>Geometría y entorno, leídos juntos.</strong></figcaption>
+      </figure>
+    </section>
+
+    <section class="cta" id="contacto" aria-labelledby="cta-title">
+      <svg class="cta__contours" viewBox="0 0 1200 420" aria-hidden="true" focusable="false">
+        <path d="M-30 306C180 92 370 70 546 174s350 116 700-82"/>
+        <path d="M-18 354C198 148 388 126 560 222s340 110 674-70"/>
+        <path d="M38 410c212-184 394-202 554-120s312 94 604-58"/>
+      </svg>
+      <div class="cta__inner reveal" data-reveal>
+        <p class="kicker">Tu siguiente proyecto</p>
+        <h2 id="cta-title">¿Vas a proyectar sobre un terreno?<br><em>Empieza por medirlo.</em></h2>
+        <p>Medir bien cuesta menos que corregir después.</p>
+        <a class="cta__button" href="https://wa.me/527757602869?text=Hola%2C%20vi%20el%20caso%20de%20levantamiento%20a%C3%A9reo%20en%20terreno%20boscoso%20y%20quiero%20platicar%20sobre%20un%20proyecto." target="_blank" rel="noopener noreferrer">
+          Platicar por WhatsApp
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand brand--footer" href="#inicio" aria-label="Drone Mapping, regresar al inicio">
+      <span class="brand__name">Drone Mapping</span>
+    </a>
+    <p>Topografía aérea · Visualización técnica</p>
+    <p>© <span data-year></span> Drone Mapping</p>
+  </footer>
+</body>
+</html>
