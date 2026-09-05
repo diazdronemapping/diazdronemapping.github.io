@@ -146,6 +146,30 @@
   footer a{ color:var(--pale); text-decoration:none; }
   footer .fb{ font-family:var(--fd); font-weight:700; color:#fff; font-size:17px; }
 
+  /* ── video ── */
+  .vidrow{ margin-top:34px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr); gap:22px; align-items:start; }
+  .vbox{ background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+    box-shadow:0 8px 22px rgba(30,45,18,.07); }
+  .vbox video{ width:100%; display:block; background:#0D100A; }
+  .vbox .vb{ padding:16px 20px 18px; }
+  .vbox .vk{ font-family:var(--ft); font-size:11.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--moss); }
+  .vbox h3{ font-family:var(--fd); font-weight:650; font-size:19px; margin-top:5px; }
+  .vbox p{ margin-top:6px; font-size:15px; color:var(--ink3); line-height:1.5; }
+  .vbox.tall video{ max-height:640px; object-fit:contain; }
+
+  /* ── interiores destacados ── */
+  .intro-int{ margin-top:44px; }
+  .igrid{ margin-top:22px; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px; }
+  .ic{ border-radius:14px; overflow:hidden; border:1px solid var(--line); background:var(--card);
+    box-shadow:0 6px 18px rgba(30,45,18,.06); }
+  .ic .im{ aspect-ratio:4/3; overflow:hidden; cursor:zoom-in; background:#DED8CB; }
+  .ic .im img{ width:100%; height:100%; object-fit:cover; }
+  .ic .cp{ padding:13px 15px 15px; }
+  .ic .cp b{ font-family:var(--fd); font-weight:650; font-size:16.5px; display:block; }
+  .ic .cp span{ display:block; margin-top:4px; font-size:14.5px; color:var(--ink3); line-height:1.45; }
+  @media (max-width:900px){ .vidrow{ grid-template-columns:1fr; } }
+  @media (max-width:620px){ .igrid{ grid-template-columns:1fr 1fr; gap:12px; } .ic .cp span{ display:none; } }
+
   dialog{ border:none; padding:0; background:transparent; max-width:97vw; max-height:97vh; }
   dialog::backdrop{ background:rgba(10,12,8,.93); }
   dialog img{ max-width:97vw; max-height:87vh; border-radius:10px; }
@@ -196,6 +220,29 @@
       un tractocamión en Zapata Querétaro.</p>
 
     <div class="steps" id="steps"></div>
+
+    <div class="vidrow">
+      <div class="vbox">
+        <video controls preload="none" poster="media/poster_aerea.jpg" playsinline>
+          <source src="media/aerea_tdr.mp4" type="video/mp4">
+        </video>
+        <div class="vb">
+          <div class="vk">Video · toma aérea</div>
+          <h3>La órbita de la unidad, en movimiento</h3>
+          <p>Cada unidad se acompaña de clip de video, no solo fotografía. Este es material real de una entrega en Zapata Querétaro.</p>
+        </div>
+      </div>
+      <div class="vbox tall">
+        <video controls preload="none" poster="media/poster_reel.jpg" playsinline>
+          <source src="media/reel_solaqro.mp4" type="video/mp4">
+        </video>
+        <div class="vb">
+          <div class="vk">Video · pieza terminada</div>
+          <h3>Lo que su equipo puede armar</h3>
+          <p>Ejemplo de lo que se puede montar con el material entregado.</p>
+        </div>
+      </div>
+    </div>
 
     <div class="callout">
       <p><b>Por qué importa que sea siempre igual.</b> Cuando cada agencia contrata por su cuenta, una manda
@@ -285,10 +332,17 @@
       <button class="chip" aria-pressed="true" data-f="all">Todo</button>
       <button class="chip" aria-pressed="false" data-f="carga">Carga</button>
       <button class="chip" aria-pressed="false" data-f="pasaje">Pasaje</button>
-      <button class="chip" aria-pressed="false" data-f="otro">Interiores y eventos</button>
-    </div>
+          </div>
 
     <div class="vgrid" id="vgrid"></div>
+
+    <div class="intro-int">
+      <div class="lead-n">Interiores</div>
+      <h2 style="font-size:clamp(23px,2.8vw,30px);">Lo que no se ve desde afuera</h2>
+      <p class="intro">La cabina y el salón son la mitad de la decisión de compra y casi nadie los fotografía bien.
+        Van incluidos en el recorrido de cada unidad.</p>
+      <div class="igrid" id="igrid"></div>
+    </div>
 
     <div class="close">
       <div>
@@ -296,7 +350,7 @@
         <p>En la entrega real, cada una de las ocho agencias recibe su propia carpeta y su propia página,
           con el material de su jornada y solo el suyo.</p>
       </div>
-      <a href="https://wa.me/527757602869" target="_blank" rel="noopener">Hablar con Drone Mapping</a>
+      <a href="https://wa.me/527757602869" target="_blank" rel="noopener">Habla con Diego, director creativo</a>
     </div>
   </div>
 </section>
@@ -337,8 +391,13 @@ const VARIEDAD = [
   {f:'v2_tdr',          t:'carga',  k:'Tractocamión · TDR',     h:'Otra imagen de marca', p:'La misma cobertura se adapta a la identidad del cliente final.'},
   {f:'v3_bus_blanco',   t:'pasaje', k:'Autobús · Transpecial',  h:'Transporte de personal', p:'Perfil completo con la identidad de la agencia detrás.'},
   {f:'v4_bus_rojo',     t:'pasaje', k:'Autobús · A Colón Nacional', h:'Autotransporte foráneo', p:'Unidades rotuladas, cubiertas con el mismo recorrido.'},
-  {f:'v5_interior_bus', t:'otro',   k:'Interior de pasaje',     h:'Por dentro también', p:'Salón, asientos y terminado: lo que no se ve desde afuera.'},
-  {f:'v6_evento',       t:'otro',   k:'Evento interno',         h:'Activaciones de la agencia', p:'Cobertura de eventos corporativos, también con tomas aéreas.'},
+];
+
+const INTERIORES = [
+  {f:'i1_pasaje',  h:'Salón de pasaje',      p:'Asientos, pasillo y terminado, con la unidad todavía protegida de fábrica.'},
+  {f:'i2_cabina',  h:'Puesto de conducción', p:'Volante, tablero y controles: lo primero que revisa un operador.'},
+  {f:'i3_palanca', h:'Equipamiento',         p:'Transmisión y detalles de equipo, en primer plano.'},
+  {f:'i4_espejo',  h:'Interior desde el retrovisor', p:'El salón completo leído en el espejo, sin abrir la puerta.'},
 ];
 
 const viewer = document.getElementById('viewer');
@@ -378,6 +437,16 @@ document.getElementById('filters').addEventListener('click', e => {
   renderV(b.dataset.f);
 });
 renderV('all');
+
+const igrid = document.getElementById('igrid');
+INTERIORES.forEach(v => {
+  const el = document.createElement('article');
+  el.className = 'ic';
+  el.innerHTML = '<div class="im"><img loading="lazy" src="img/th_' + v.f + '.jpg" alt="' + v.h + '"></div>' +
+    '<div class="cp"><b>' + v.h + '</b><span>' + v.p + '</span></div>';
+  el.querySelector('.im').addEventListener('click', () => open_(v.f, v.h));
+  igrid.appendChild(el);
+});
 </script>
 
 </body>
