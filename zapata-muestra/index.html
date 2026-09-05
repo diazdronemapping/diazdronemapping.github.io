@@ -131,6 +131,49 @@
   .vc .tagline{ font-family:var(--ft); font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--moss); }
   .vc h3{ font-family:var(--fd); font-weight:650; font-size:19px; margin-top:6px; }
   .vc p{ margin-top:6px; font-size:15px; color:var(--ink3); line-height:1.5; }
+  .vc .go2{ margin-top:13px; display:inline-flex; align-items:center; gap:7px; min-height:44px;
+    font-family:var(--ft); font-size:13.5px; color:var(--moss); text-decoration:none;
+    border-top:1px dashed var(--line2); padding-top:12px; width:100%; }
+  .vc .go2:hover{ color:var(--ink); }
+  .vc .go2:focus-visible{ outline:2px solid var(--moss); outline-offset:3px; border-radius:4px; }
+  .vc .go2 svg{ width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2; flex:none; }
+
+  /* ── cinco entregas ── */
+  .entwrap{ margin-top:34px; }
+  .entwrap .et{ font-family:var(--ft); font-size:12px; letter-spacing:.15em; text-transform:uppercase;
+    color:var(--moss); }
+  .entwrap .eh{ margin-top:9px; font-family:var(--fd); font-weight:700; font-size:clamp(19px,2.2vw,24px);
+    letter-spacing:-.018em; }
+  .entwrap .ep{ margin-top:9px; font-size:16px; color:var(--ink2); max-width:74ch; }
+  .entgrid{ margin-top:20px; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:13px; }
+  .ent{ display:flex; flex-direction:column; background:var(--card); border:1px solid var(--line);
+    border-radius:13px; overflow:hidden; text-decoration:none; color:inherit;
+    box-shadow:0 5px 15px rgba(30,45,18,.05);
+    transition:border-color .2s ease-out, box-shadow .2s ease-out; }
+  .ent:hover{ border-color:var(--moss); box-shadow:0 12px 26px rgba(30,45,18,.13); }
+  .ent:focus-visible{ outline:2px solid var(--moss); outline-offset:3px; }
+  .ent .im{ position:relative; width:100%; height:0; padding-top:62.5%; overflow:hidden; background:#DED8CB; }
+  .ent .im img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .ent .mo{ position:absolute; top:0; left:0; z-index:2; font-family:var(--ft); font-weight:700;
+    font-size:11px; letter-spacing:.09em; text-transform:uppercase; background:var(--dark);
+    color:var(--lime); padding:5px 10px; border-radius:0 0 10px 0; }
+  .ent .eb{ padding:12px 13px 14px; display:flex; flex-direction:column; gap:3px; flex:1; }
+  .ent .en{ font-family:var(--fd); font-weight:650; font-size:16px; line-height:1.2; }
+  .ent .eu{ font-size:13.5px; color:var(--ink3); line-height:1.4; }
+  .ent .ef{ margin-top:auto; padding-top:9px; font-family:var(--ft); font-size:10.5px; color:var(--ink4);
+    word-break:break-all; border-top:1px dashed var(--line2); }
+  @media (max-width:1000px){ .entgrid{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  @media (max-width:620px){ .entgrid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .ent .eu{ display:none; } }
+
+  /* ── nota de volumen ── */
+  .volnote{ margin-top:26px; background:#F0F5E7; border:1px solid #DCE9C9; border-radius:13px;
+    padding:20px 24px; display:flex; gap:26px; flex-wrap:wrap; align-items:center; }
+  .volnote .vn{ display:flex; flex-direction:column; }
+  .volnote .vn b{ font-family:var(--ft); font-weight:700; font-size:26px; color:var(--moss);
+    letter-spacing:-.01em; line-height:1.1; }
+  .volnote .vn span{ font-size:14px; color:var(--ink2); margin-top:3px; }
+  .volnote p{ font-size:15px; color:var(--ink2); line-height:1.5; flex:1; min-width:260px; }
 
   /* ── cierre ── */
   .close{ background:var(--dark); color:#EAEFE2; border-radius:18px; padding:40px 44px; margin-top:16px;
@@ -148,19 +191,48 @@
 
   /* ── clips de video ── */
   .vidhead{ margin-top:56px; }
+  .vidbar{ margin-top:18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .snd{ display:inline-flex; align-items:center; gap:9px; min-height:44px; padding:10px 18px;
+    border-radius:10px; cursor:pointer; background:var(--card); border:1px solid var(--line2);
+    font-family:var(--ft); font-size:13.5px; color:var(--ink2); transition:background .2s,border-color .2s,color .2s; }
+  .snd:hover{ border-color:var(--moss); color:var(--ink); }
+  .snd:focus-visible{ outline:2px solid var(--moss); outline-offset:2px; }
+  .snd[aria-pressed="true"]{ background:var(--moss); border-color:var(--moss); color:#fff; }
+  .snd svg{ width:17px; height:17px; flex:none; }
+  .snd .off{ display:none; }
+  .snd[aria-pressed="true"] .on_{ display:none; }
+  .snd[aria-pressed="true"] .off{ display:block; }
   .vidhead h3{ font-family:var(--fd); font-weight:700; font-size:clamp(21px,2.5vw,28px);
     letter-spacing:-.022em; margin-top:13px; }
   .vidhead p{ margin-top:11px; font-size:17px; color:var(--ink2); max-width:70ch; }
   .clipgrid{ margin-top:26px; display:grid; grid-template-columns:repeat(auto-fill,minmax(298px,1fr)); gap:20px; }
   .clip{ background:var(--card); border:1px solid var(--line); border-radius:15px; overflow:hidden;
-    box-shadow:0 6px 18px rgba(30,45,18,.06); display:flex; flex-direction:column; }
-  .clip .vw{ position:relative; aspect-ratio:16/9; background:#0D100A; cursor:zoom-in; }
-  .clip video{ width:100%; height:100%; object-fit:cover; display:block; }
+    box-shadow:0 6px 18px rgba(30,45,18,.06); display:flex; flex-direction:column;
+    transition:border-color .22s ease-out, box-shadow .22s ease-out, transform .22s ease-out; }
+  .clip.playing{ border-color:var(--lime); box-shadow:0 14px 32px rgba(30,45,18,.16);
+    transform:translateY(-3px); }
+  /* caja de proporcion por padding: el ancho manda siempre, no puede derivarse del alto */
+  .clip .vw{ position:relative; width:100%; height:0; padding-top:56.25%; overflow:hidden;
+    background:#0D100A; cursor:zoom-in; }
+  .clip video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
+    opacity:.82; transition:opacity .3s ease-out; }
+  .clip.playing video{ opacity:1; }
   .clip .mv{ position:absolute; top:0; left:0; z-index:2; font-family:var(--ft); font-weight:700;
-    font-size:12px; letter-spacing:.06em; background:var(--dark); color:var(--lime);
-    padding:6px 12px; border-radius:0 0 11px 0; }
+    font-size:12px; letter-spacing:.06em; background:var(--dark); color:#8E9B80;
+    padding:6px 12px; border-radius:0 0 11px 0; transition:color .22s ease-out; }
+  .clip.playing .mv{ color:var(--lime); }
   .clip .dur{ position:absolute; right:9px; bottom:9px; z-index:2; font-family:var(--ft); font-size:11.5px;
-    background:rgba(12,15,9,.72); color:#E7EEDD; padding:3px 8px; border-radius:6px; }
+    background:rgba(12,15,9,.72); color:#E7EEDD; padding:3px 8px; border-radius:6px;
+    transition:opacity .22s ease-out; }
+  .clip.playing .dur{ opacity:0; }
+  .clip .bar{ position:absolute; left:0; bottom:0; height:3px; width:0%; z-index:3;
+    background:var(--lime); opacity:0; }
+  .clip.playing .bar{ opacity:1; }
+  .clip .exp{ position:absolute; right:9px; top:9px; z-index:2; width:30px; height:30px;
+    border-radius:8px; background:rgba(12,15,9,.6); display:grid; place-items:center;
+    opacity:0; transition:opacity .22s ease-out; }
+  .clip .exp svg{ width:15px; height:15px; stroke:#E7EEDD; fill:none; stroke-width:2; }
+  .clip .vw:hover .exp, .clip.playing .exp{ opacity:1; }
   .clip .body{ padding:15px 17px 17px; display:flex; flex-direction:column; gap:5px; flex:1; }
   .clip .ang{ font-family:var(--fd); font-weight:650; font-size:18px; }
   .clip .why{ font-size:14.5px; color:var(--ink3); line-height:1.5; }
@@ -171,8 +243,12 @@
   /* ── la pieza editada · aparte ── */
   .reelbox{ margin-top:46px; background:var(--card); border:1px solid var(--line);
     border-top:4px solid var(--clay); border-radius:16px; padding:28px 30px;
-    display:grid; grid-template-columns:258px minmax(0,1fr); gap:30px; align-items:center;
+    display:grid; grid-template-columns:340px minmax(0,1fr); gap:32px; align-items:center;
     box-shadow:0 8px 22px rgba(30,45,18,.07); }
+  .reelbox .reelpair{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .reelbox figure{ margin:0; }
+  .reelbox figcaption{ margin-top:8px; font-family:var(--ft); font-size:11.5px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--ink4); text-align:center; }
   .reelbox video{ width:100%; display:block; border-radius:12px; background:#0D100A; }
   .reelbox .rk{ font-family:var(--ft); font-size:11.5px; letter-spacing:.11em; text-transform:uppercase;
     color:var(--clay); font-weight:600; }
@@ -183,11 +259,27 @@
     padding:14px 18px; font-size:15px; color:var(--ink2); line-height:1.5; }
   .reelbox .note b{ color:var(--clay); }
   @media (max-width:760px){ .reelbox{ grid-template-columns:1fr; padding:22px 20px; }
-    .reelbox video{ max-width:248px; margin:0 auto; } }
+    .reelbox .reelpair{ max-width:420px; margin:0 auto; gap:10px; } }
+
+  /* ── franja aerea ── */
+  .airwrap{ margin-top:46px; }
+  .airgrid{ margin-top:22px; display:grid; gap:16px;
+    grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-rows:220px; }
+  .air{ position:relative; border-radius:14px; overflow:hidden; cursor:zoom-in;
+    background:#DED8CB; border:1px solid var(--line); }
+  .air img{ width:100%; height:100%; object-fit:cover; transition:transform .4s ease-out; }
+  .air:hover img{ transform:scale(1.04); }
+  .air .cap{ position:absolute; left:0; right:0; bottom:0; padding:26px 14px 11px; color:#fff;
+    font-family:var(--ft); font-size:12.5px; letter-spacing:.03em;
+    background:linear-gradient(to top, rgba(8,10,6,.86), rgba(8,10,6,0)); }
+  .air.tall{ grid-row:span 2; }
+  .air.wide{ grid-column:span 2; }
+  @media (max-width:820px){ .airgrid{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:170px; }
+    .air.wide{ grid-column:span 2; } .air.tall{ grid-row:span 2; } }
 
   /* ── interiores destacados ── */
-  .intro-int{ margin-top:44px; }
-  .igrid{ margin-top:22px; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px; }
+  .intro-int{ margin-top:46px; }
+  .igrid{ margin-top:22px; display:grid; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); gap:16px; }
   .ic{ border-radius:14px; overflow:hidden; border:1px solid var(--line); background:var(--card);
     box-shadow:0 6px 18px rgba(30,45,18,.06); }
   .ic .im{ aspect-ratio:4/3; overflow:hidden; cursor:zoom-in; background:#DED8CB; }
@@ -196,6 +288,13 @@
   .ic .cp b{ font-family:var(--fd); font-weight:650; font-size:16.5px; display:block; }
   .ic .cp span{ display:block; margin-top:4px; font-size:14.5px; color:var(--ink3); line-height:1.45; }
   @media (max-width:620px){ .igrid{ grid-template-columns:1fr 1fr; gap:12px; } .ic .cp span{ display:none; } }
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{ animation-duration:.01ms!important; transition-duration:.01ms!important; }
+    html{ scroll-behavior:auto; }
+    .clip.playing{ transform:none; }
+    .air:hover img{ transform:none; }
+  }
 
   dialog{ border:none; padding:0; background:transparent; max-width:97vw; max-height:97vh; }
   dialog::backdrop{ background:rgba(10,12,8,.93); }
@@ -256,21 +355,43 @@
         tal como se entrega: sin edición, sin música y sin rótulos.</p>
     </div>
 
+    <div class="vidbar">
+      <button class="snd" id="sndbtn" type="button" aria-pressed="false" aria-label="Activar el sonido de los clips">
+        <svg class="on_" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        <span id="sndtxt">Activar sonido</span>
+      </button>
+      <span class="clipnote" style="margin:0;">Se reproducen de uno en uno. Pasa el cursor para elegir cuál, o deja que avancen solos.</span>
+    </div>
+
     <div class="clipgrid" id="clipgrid"></div>
-    <div class="clipnote">Se reproducen sin sonido y en bucle. Da clic en cualquiera para verlo a pantalla completa.</div>
+    <div class="clipnote">Da clic en cualquier clip para verlo a pantalla completa.</div>
 
     <div class="reelbox">
-      <video controls preload="none" playsinline poster="media/poster_reel.jpg">
-        <source src="media/reel_solaqro.mp4" type="video/mp4">
-      </video>
+      <div class="reelpair">
+        <figure>
+          <video controls preload="none" playsinline poster="media/poster_reel_tdr.jpg">
+            <source src="media/reel_tdr.mp4" type="video/mp4">
+          </video>
+          <figcaption>TDR · 19 s</figcaption>
+        </figure>
+        <figure>
+          <video controls preload="none" playsinline poster="media/poster_reel.jpg">
+            <source src="media/reel_solaqro.mp4" type="video/mp4">
+          </video>
+          <figcaption>SOLAQRO · 45 s</figcaption>
+        </figure>
+      </div>
       <div>
         <div class="rk">Aparte · no incluido en esta propuesta</div>
         <h3>Y esto es lo que se puede armar después con ese material</h3>
-        <p>Pieza real montada con clips de una entrega en Zapata Querétaro. Está aquí para que se vea
-          hasta dónde llega el material grabado, no como parte del entregable: lo que se cotiza es la
-          captura y la organización. El montaje es un trabajo distinto.</p>
-        <div class="note"><b>Quién la edita.</b> Con la carpeta entregada, su equipo o su agencia puede
-          montar piezas como esta sin volver a grabar. Si prefieren que la edición corra por nuestra
+        <p>Dos piezas reales montadas con clips de entregas en Zapata Querétaro. La de TDR usa
+          exactamente los movimientos que acaba de ver arriba: así se ven cuando alguien los corta,
+          los ordena y les pone música.</p>
+        <p>Están aquí para que se vea hasta dónde llega el material grabado, no como parte del
+          entregable: lo que se cotiza es la captura y la organización. El montaje es un trabajo distinto.</p>
+        <div class="note"><b>Quién las edita.</b> Con la carpeta entregada, su equipo o su agencia puede
+          montar piezas como estas sin volver a grabar. Si prefieren que la edición corra por nuestra
           cuenta, se cotiza por separado.</div>
       </div>
     </div>
@@ -342,6 +463,24 @@
       </div>
     </div>
 
+    <div class="volnote">
+      <div class="vn"><b>~110</b><span>fotografías por agencia</span></div>
+      <div class="vn"><b>15–20</b><span>de ellas aéreas</span></div>
+      <div class="vn"><b>+35</b><span>clips de video</span></div>
+      <p>Cifras de una jornada de hasta 12 unidades. No son ocho fotos y seis videos: ese es el
+        <em>recorrido</em>, y se repite en cada unidad del piso. En los portafolios enlazados abajo
+        está el volumen real de entregas anteriores.</p>
+    </div>
+
+    <div class="entwrap">
+      <div class="et">Cinco entregas seguidas</div>
+      <div class="eh">La estructura ya se probó cinco veces, en cinco meses seguidos</div>
+      <p class="ep">De junio a octubre de 2024 cubrimos cinco entregas de flota en Zapata Querétaro, con
+        cinco clientes finales y cuatro tipos de unidad distintos. Cada una salió en su propia carpeta,
+        con la misma estructura y la misma nomenclatura. Esto es lo que se replicaría en las ocho sedes.</p>
+      <div class="entgrid" id="entgrid"></div>
+    </div>
+
     <div class="naming">
       <div class="nl">Cómo se lee un nombre de archivo</div>
       <div class="code">ZQRO_U216_03-PERFIL.jpg</div>
@@ -361,7 +500,8 @@
     <div class="lead-n">Nivel 3 · El rango</div>
     <h2>No solo tractocamiones</h2>
     <p class="intro">El mismo criterio se aplica a todo lo que haya en piso. Estas son coberturas reales
-      hechas para Zapata Querétaro, con distintos tipos de unidad y distintos clientes finales.</p>
+      hechas para Zapata Querétaro, con distintos tipos de unidad y distintos clientes finales.
+      Cada una enlaza a su portafolio publicado, con la entrega completa.</p>
 
     <div class="filters" id="filters">
       <button class="chip" aria-pressed="true" data-f="all">Todo</button>
@@ -370,6 +510,15 @@
           </div>
 
     <div class="vgrid" id="vgrid"></div>
+
+    <div class="airwrap">
+      <div class="lead-n">Desde el aire</div>
+      <h3 style="font-family:var(--fd);font-weight:700;font-size:clamp(21px,2.5vw,28px);letter-spacing:-.022em;margin-top:13px;">No sólo desde el piso</h3>
+      <p class="intro" style="margin-top:11px;">El dron no es un extra de la jornada: resuelve los planos que
+        ninguna cámara en tierra alcanza. Inventario completo en un cuadro, la sede en su contexto y la
+        flota entregada al cierre del día.</p>
+      <div class="airgrid" id="airgrid"></div>
+    </div>
 
     <div class="intro-int">
       <div class="lead-n">Interiores</div>
@@ -443,17 +592,49 @@ const CLIPS = [
 ];
 
 const VARIEDAD = [
-  {f:'v1_tracto',       t:'carga',  k:'Tractocamión · SOLAQRO', h:'Flota de carga', p:'Freightliner en configuración de arrastre, cubiertos unidad por unidad.'},
-  {f:'v2_tdr',          t:'carga',  k:'Tractocamión · TDR',     h:'Otra imagen de marca', p:'La misma cobertura se adapta a la identidad del cliente final.'},
-  {f:'v3_bus_blanco',   t:'pasaje', k:'Autobús · Transpecial',  h:'Transporte de personal', p:'Perfil completo con la identidad de la agencia detrás.'},
-  {f:'v4_bus_rojo',     t:'pasaje', k:'Autobús · A Colón Nacional', h:'Autotransporte foráneo', p:'Unidades rotuladas, cubiertas con el mismo recorrido.'},
+  {f:'v1_tracto',     t:'carga',  k:'Tractocamión · SOLAQRO', h:'Flota de carga', p:'Freightliner en configuración de arrastre, cubiertos unidad por unidad.',
+   u:'https://www.dronemapping.mx/zapata/solaqro'},
+  {f:'v2_tdr',        t:'carga',  k:'Tractocamión · TDR',     h:'Otra imagen de marca', p:'La misma cobertura se adapta a la identidad del cliente final.',
+   u:'https://www.dronemapping.mx/tdr'},
+  {f:'v3_bus_blanco', t:'pasaje', k:'Autobús · Transpecial',  h:'Transporte de personal', p:'Perfil completo con la identidad de la agencia detrás.',
+   u:'https://www.dronemapping.mx/zapata/transpecial'},
+  {f:'v4_bus_rojo',   t:'pasaje', k:'Autobús · A Colón Nacional', h:'Autotransporte foráneo', p:'Unidades rotuladas, cubiertas con el mismo recorrido.',
+   u:'https://www.dronemapping.mx/zapata/cn'},
+];
+
+const ENTREGAS = [
+  {f:'e1_solaqro',     m:'Jun 2024', n:'SOLAQRO',           u:'Tractocamiones Freightliner',
+   d:'ZQRO_SOLAQRO_2024-06/',     l:'https://www.dronemapping.mx/zapata/solaqro'},
+  {f:'e2_cn',          m:'Jul 2024', n:'A Colón Nacional',  u:'Autobuses de pasaje',
+   d:'ZQRO_ACOLON_2024-07/',      l:'https://www.dronemapping.mx/zapata/cn'},
+  {f:'e3_tdr',         m:'Ago 2024', n:'TDR',               u:'Tractocamiones de flota',
+   d:'ZQRO_TDR_2024-08/',         l:'https://www.dronemapping.mx/tdr'},
+  {f:'e4_tim',         m:'Sep 2024', n:'TIM Transportes',   u:'Cinco unidades, 01 a 05',
+   d:'ZQRO_TIM_2024-09/',         l:'https://www.dronemapping.mx/tim'},
+  {f:'e5_transpecial', m:'Oct 2024', n:'Transpecial',       u:'Autobuses de personal',
+   d:'ZQRO_TRANSPECIAL_2024-10/', l:'https://www.dronemapping.mx/zapata/transpecial'},
+];
+
+const AEREAS = [
+  {f:'a1_nocturna_sede',     c:'La sede sobre el bulevar, de noche', cls:'wide'},
+  {f:'a2_nocturna_flota',    c:'La flota entregada, al cierre del día'},
+  {f:'a3_cenital_formacion', c:'Cenital · el inventario en formación', cls:'tall'},
+  {f:'a4_atardecer',         c:'Atardecer sobre el piso de venta'},
+  {f:'a5_buses_fila',        c:'Autobuses en fila, cielo abierto'},
+  {f:'a6_flota_fachada',     c:'Flota alineada frente a la agencia', cls:'wide'},
 ];
 
 const INTERIORES = [
-  {f:'i1_pasaje',  h:'Salón de pasaje',      p:'Asientos, pasillo y terminado, con la unidad todavía protegida de fábrica.'},
-  {f:'i2_cabina',  h:'Puesto de conducción', p:'Volante, tablero y controles: lo primero que revisa un operador.'},
-  {f:'i3_palanca', h:'Equipamiento',         p:'Transmisión y detalles de equipo, en primer plano.'},
-  {f:'i4_espejo',  h:'Interior desde el retrovisor', p:'El salón completo leído en el espejo, sin abrir la puerta.'},
+  {f:'i1_pasaje',        h:'Salón de pasaje',        p:'Asientos, pasillo y terminado, con la unidad todavía protegida de fábrica.'},
+  {f:'i2_espejo',        h:'El salón en el retrovisor', p:'El interior completo leído en el espejo, sin abrir la puerta.'},
+  {f:'i3_puesto_mb',     h:'Puesto de conducción',   p:'Volante, palanca y consola de un Mercedes-Benz de pasaje.'},
+  {f:'i4_tablero',       h:'Tablero de instrumentos',p:'Velocímetro, tacómetro y pantalla, con la estrella al centro.'},
+  {f:'i5_palanca_mb',    h:'Transmisión Mercedes',   p:'Palanca de seis velocidades en primer plano.'},
+  {f:'i6_botonera',      h:'Botonera de servicio',   p:'Los controles que opera el chofer todos los días.'},
+  {f:'i7_volante_fl',    h:'Volante Freightliner',   p:'Puesto de conducción de tractocamión, con mandos al volante.'},
+  {f:'i8_consola',       h:'Consola y clima',        p:'Estéreo, manómetros de aire y control de temperatura.'},
+  {f:'i9_palanca_eaton', h:'Transmisión Eaton',      p:'El patrón de cambios de un arrastre, legible en la perilla.'},
+  {f:'i10_aire_freno',   h:'Aire y freno de motor',  p:'Freno de estacionamiento, suministro de aire y freno de motor.'},
 ];
 
 const viewer = document.getElementById('viewer');
@@ -482,7 +663,11 @@ function renderV(filter){
     el.className = 'vc';
     el.innerHTML =
       '<div class="im"><img loading="lazy" src="img/th_' + v.f + '.jpg" alt="' + v.h + '"></div>' +
-      '<div class="body"><div class="tagline">' + v.k + '</div><h3>' + v.h + '</h3><p>' + v.p + '</p></div>';
+      '<div class="body"><div class="tagline">' + v.k + '</div><h3>' + v.h + '</h3><p>' + v.p + '</p>' +
+      '<a class="go2" href="' + v.u + '" target="_blank" rel="noopener">Ver el portafolio completo' +
+      '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>' +
+      '<path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></a></div>';
     el.querySelector('.im').addEventListener('click', () => open_(v.f, v.k));
     vgrid.appendChild(el);
   });
@@ -495,39 +680,137 @@ document.getElementById('filters').addEventListener('click', e => {
 renderV('all');
 
 const clipgrid = document.getElementById('clipgrid');
+const EXPAND = '<span class="exp"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">'
+  + '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></span>';
 CLIPS.forEach(c => {
   const el = document.createElement('article');
   el.className = 'clip';
   el.innerHTML =
     '<div class="vw"><span class="mv">' + c.a.toUpperCase() + '</span>' +
-    '<span class="dur">' + c.d + '</span>' +
-    '<video muted loop playsinline preload="none" poster="media/poster_' + c.f + '.jpg">' +
-    '<source src="media/clip_' + c.f + '.mp4" type="video/mp4"></video></div>' +
+    '<span class="dur">' + c.d + '</span>' + EXPAND +
+    '<video muted playsinline preload="none" poster="media/poster_' + c.f + '.jpg"' +
+    ' aria-label="' + c.a + '"><source src="media/clip_' + c.f + '.mp4" type="video/mp4"></video>' +
+    '<i class="bar"></i></div>' +
     '<div class="body"><div class="ang">' + c.a + '</div>' +
     '<div class="why">' + c.w + '</div><div class="fn">' + c.n + '</div></div>';
-  const v = el.querySelector('video');
-  el.querySelector('.vw').addEventListener('click', () => {
-    if (v.requestFullscreen) { v.controls = true; v.requestFullscreen().catch(() => { v.controls = false; }); }
-  });
   clipgrid.appendChild(el);
 });
-document.addEventListener('fullscreenchange', () => {
-  if (!document.fullscreenElement) clipgrid.querySelectorAll('video').forEach(v => v.controls = false);
+
+/* ── Reproducción: una a la vez. El cursor elige; si no hay cursor, encadenan.
+      En táctil manda la tarjeta que está a la vista. Con reduced-motion, nada arranca solo. ── */
+(function(){
+  const cards = [...clipgrid.querySelectorAll('.clip')];
+  const vids  = cards.map(c => c.querySelector('video'));
+  const bars  = cards.map(c => c.querySelector('.bar'));
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const coarse = matchMedia('(hover: none)').matches;
+  const btn = document.getElementById('sndbtn'), btnTxt = document.getElementById('sndtxt');
+  let active = -1, hoverLock = null, onScreen = false, sound = false;
+
+  // Clic en cualquier clip: pantalla completa con controles.
+  cards.forEach((card, i) => {
+    card.querySelector('.vw').addEventListener('click', () => {
+      const v = vids[i];
+      if (v.requestFullscreen) { v.controls = true; v.requestFullscreen().catch(() => { v.controls = false; }); }
+      else { play(i); }
+    });
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) vids.forEach(v => { v.controls = false; v.muted = !sound; });
+  });
+
+  if (reduce) {                       // sin autoplay: pósters y controles
+    vids.forEach(v => { v.controls = true; });
+    if (btn) btn.hidden = true;
+    return;
+  }
+
+  function stop(i){ if (i < 0) return; vids[i].pause(); cards[i].classList.remove('playing'); bars[i].style.width = '0%'; }
+  function play(i){
+    if (i === active) return;
+    stop(active);
+    active = i;
+    const v = vids[i];
+    cards[i].classList.add('playing');
+    v.muted = !sound;
+    try { v.currentTime = 0; } catch(e){}
+    const pr = v.play(); if (pr) pr.catch(() => {});
+    const nxt = vids[(i + 1) % vids.length];          // adelanta el siguiente de la cadena
+    if (nxt.preload === 'none') { nxt.preload = 'metadata'; nxt.load(); }
+  }
+
+  vids.forEach((v, i) => {
+    v.addEventListener('timeupdate', () => {
+      if (i !== active || !v.duration) return;
+      bars[i].style.width = (v.currentTime / v.duration * 100).toFixed(1) + '%';
+    });
+    v.addEventListener('ended', () => {
+      if (i !== active) return;
+      if (coarse || hoverLock === i) { try { v.currentTime = 0; } catch(e){} v.play().catch(() => {}); }
+      else { active = -1; cards[i].classList.remove('playing'); bars[i].style.width = '0%'; play((i + 1) % vids.length); }
+    });
+  });
+
+  if (!coarse) {                       // escritorio: el cursor dirige
+    cards.forEach((card, i) => {
+      card.addEventListener('mouseenter', () => { hoverLock = i; if (onScreen) play(i); });
+      card.addEventListener('mouseleave', () => { if (hoverLock === i) hoverLock = null; });
+    });
+  }
+
+  if ('IntersectionObserver' in window) {
+    // la parrilla completa: fuera de pantalla nada se reproduce
+    new IntersectionObserver(es => es.forEach(e => {
+      onScreen = e.isIntersecting;
+      if (onScreen) { if (active < 0) play(0); }
+      else { stop(active); active = -1; }
+    }), {threshold: 0.12}).observe(clipgrid);
+
+    if (coarse) {                      // táctil: manda la tarjeta más centrada
+      const io2 = new IntersectionObserver(es => {
+        let best = null;
+        es.forEach(e => { if (e.isIntersecting && (!best || e.intersectionRatio > best.intersectionRatio)) best = e; });
+        if (best) { const i = cards.indexOf(best.target); if (i >= 0 && i !== active) play(i); }
+      }, {threshold: [0.55, 0.8], rootMargin: '-15% 0px -15% 0px'});
+      cards.forEach(c => io2.observe(c));
+    }
+  } else {
+    onScreen = true; play(0);
+  }
+
+  if (btn) btn.addEventListener('click', () => {   // el clic es el gesto que desbloquea el audio
+    sound = !sound;
+    btn.setAttribute('aria-pressed', String(sound));
+    btn.setAttribute('aria-label', sound ? 'Silenciar los clips' : 'Activar el sonido de los clips');
+    btnTxt.textContent = sound ? 'Silenciar' : 'Activar sonido';
+    vids.forEach((v, i) => { v.muted = !(sound && i === active); });
+    if (sound && active >= 0) vids[active].play().catch(() => {});
+  });
+})();
+
+/* ── las cinco entregas ── */
+const entgrid = document.getElementById('entgrid');
+ENTREGAS.forEach(e => {
+  const el = document.createElement('a');
+  el.className = 'ent'; el.href = e.l; el.target = '_blank'; el.rel = 'noopener';
+  el.innerHTML =
+    '<div class="im"><span class="mo">' + e.m + '</span>' +
+    '<img loading="lazy" src="img/th_' + e.f + '.jpg" alt="' + e.n + ' · ' + e.u + '"></div>' +
+    '<div class="eb"><div class="en">' + e.n + '</div><div class="eu">' + e.u + '</div>' +
+    '<div class="ef">' + e.d + '</div></div>';
+  entgrid.appendChild(el);
 });
 
-// Sólo se descarga y reproduce el clip que está a la vista.
-// Con ahorro de datos activado no se autorreproduce: quedan el póster y los controles.
-const saveData = !!(navigator.connection && navigator.connection.saveData);
-if ('IntersectionObserver' in window && !saveData) {
-  const io_ = new IntersectionObserver(es => es.forEach(e => {
-    const v = e.target;
-    if (e.isIntersecting) { const pr = v.play(); if (pr) pr.catch(() => {}); }
-    else v.pause();
-  }), {rootMargin: '120px 0px', threshold: 0.25});
-  clipgrid.querySelectorAll('video').forEach(v => io_.observe(v));
-} else {
-  clipgrid.querySelectorAll('video').forEach(v => { v.controls = true; v.preload = 'none'; });
-}
+/* ── franja aérea ── */
+const airgrid = document.getElementById('airgrid');
+AEREAS.forEach(a => {
+  const el = document.createElement('figure');
+  el.className = 'air' + (a.cls ? ' ' + a.cls : '');
+  el.innerHTML = '<img loading="lazy" src="img/th_' + a.f + '.jpg" alt="' + a.c + '">' +
+                 '<figcaption class="cap">' + a.c + '</figcaption>';
+  el.addEventListener('click', () => open_(a.f, a.c));
+  airgrid.appendChild(el);
+});
 
 const igrid = document.getElementById('igrid');
 INTERIORES.forEach(v => {
