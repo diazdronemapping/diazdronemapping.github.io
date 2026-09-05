@@ -1,230 +1,383 @@
 <!doctype html>
 <!--
-  Página de entrega · MUESTRA para la cotización de Zapata Camiones (8 agencias).
-  Demuestra qué recibe cada agencia con el paquete Integral: nomenclatura por unidad,
-  acceso permanente y descarga directa sin ligas que caducan.
-  Las imágenes son trabajo real de Drone Mapping para Zapata Querétaro (ya público en dronemapping.mx).
+  Muestra de entrega · Zapata Camiones — Drone Mapping MX
+  Objetivo: demostrar el MÉTODO de cobertura y organización, no solo la calidad de la foto.
+    Nivel 1 · el recorrido de tomas que se aplica a cada unidad
+    Nivel 2 · cómo queda organizado el material al entregarse
+    Nivel 3 · el rango de cobertura, con los proyectos reales hechos para Zapata Querétaro
+  Imágenes: trabajo real de Drone Mapping para Zapata Querétaro (SOLAQRO/TDR, Transpecial,
+  A Colón Nacional y el evento interno), ya públicas en dronemapping.mx.
   Publicada en presentacion.dronemapping.mx/zapata-muestra/
 -->
 <html lang="es">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Entrega de muestra · Zapata Camiones — Drone Mapping MX</title>
-<meta name="description" content="Ejemplo de la página de entrega que recibe cada agencia con el paquete Integral." />
+<title>Muestra de entrega · Zapata Camiones — Drone Mapping MX</title>
+<meta name="description" content="Cómo se cubre cada unidad y cómo se organiza el material al entregarlo." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --green-500:#7BC142; --green-600:#689D36; --green-700:#527A2A; --green-200:#C5E4A0;
-    --blue-700:#2B7AA6;
+    --lime:#7BC142; --lime-d:#689D36; --moss:#527A2A; --pale:#C5E4A0;
+    --blue:#2B7AA6; --blue-l:#5AADE0;
     --clay:#C96F4C;
-    --ink:#14170F; --ink-2:#3A3F33; --ink-3:#6B7062; --ink-4:#9AA08F;
-    --bg:#F3EFE6; --card:#FFFFFF; --border:#E2DCCE;
-    --f-d:'Outfit',system-ui,sans-serif; --f-b:'Work Sans',system-ui,sans-serif; --f-t:'Space Grotesk',monospace;
+    --ink:#14170F; --ink2:#3A3F33; --ink3:#6B7062; --ink4:#9AA08F;
+    --bg:#F4F1E8; --card:#FFFFFF; --line:#E3DDCF; --line2:#D2CBBA;
+    --dark:#141810; --dark2:#1D2318;
+    --fd:'Outfit',system-ui,sans-serif; --fb:'Work Sans',system-ui,sans-serif; --ft:'Space Grotesk',ui-monospace,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{ font-family:var(--f-b); background:var(--bg); color:var(--ink); line-height:1.55;
+  html{scroll-behavior:smooth;}
+  body{ font-family:var(--fb); background:var(--bg); color:var(--ink); line-height:1.6;
     -webkit-font-smoothing:antialiased; }
-  .wrap{ max-width:1180px; margin:0 auto; padding:0 24px; }
+  .wrap{ max-width:1220px; margin:0 auto; padding:0 26px; }
+  img{ display:block; max-width:100%; }
 
-  /* barra de muestra */
-  .demobar{ background:var(--clay); color:#fff; text-align:center; padding:11px 24px;
-    font-family:var(--f-t); font-size:13.5px; letter-spacing:.06em; }
-  .demobar b{ font-weight:700; }
+  /* ── barra de muestra ── */
+  .demobar{ background:var(--clay); color:#fff; padding:12px 26px; text-align:center;
+    font-family:var(--ft); font-size:13.5px; letter-spacing:.04em; position:sticky; top:0; z-index:40; }
+  .demobar b{ font-weight:700; letter-spacing:.09em; }
 
-  header{ background:linear-gradient(150deg,#16372A,#28523C); color:#fff; padding:44px 0 40px; }
-  header .top{ display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; }
-  header .brand{ font-family:var(--f-d); font-weight:700; font-size:17px; letter-spacing:.02em;
-    color:rgba(255,255,255,.82); }
-  header .date{ font-family:var(--f-t); font-size:13.5px; color:rgba(255,255,255,.62); }
-  header h1{ font-family:var(--f-d); font-weight:800; font-size:clamp(30px,5vw,46px); line-height:1.08;
-    letter-spacing:-.02em; margin-top:26px; }
-  header .sub{ margin-top:12px; font-size:17.5px; color:rgba(255,255,255,.78); max-width:620px; }
-  header .stats{ margin-top:30px; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; }
-  header .st{ background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16);
-    border-radius:13px; padding:16px 18px; }
-  header .st .v{ font-family:var(--f-t); font-weight:700; font-size:26px; color:var(--green-200); line-height:1; }
-  header .st .k{ margin-top:7px; font-family:var(--f-t); font-size:11.5px; letter-spacing:.12em;
-    text-transform:uppercase; color:rgba(255,255,255,.6); }
+  /* ── hero ── */
+  header{ background:
+      radial-gradient(circle at 82% 10%, rgba(123,193,66,.16), transparent 46%),
+      linear-gradient(155deg,#16291C 0%,#1D3524 55%,#16211A 100%);
+    color:#fff; padding:52px 0 46px; }
+  .hrow{ display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; }
+  .brandmark{ display:flex; align-items:center; gap:11px; font-family:var(--fd); font-weight:700;
+    font-size:16px; color:rgba(255,255,255,.9); }
+  .brandmark i{ width:9px; height:9px; background:var(--lime); border-radius:2px; transform:rotate(45deg); display:block; }
+  .hmeta{ font-family:var(--ft); font-size:13.5px; color:rgba(255,255,255,.55); }
+  header h1{ font-family:var(--fd); font-weight:800; font-size:clamp(31px,5.2vw,52px); line-height:1.06;
+    letter-spacing:-.025em; margin-top:30px; max-width:16ch; }
+  header .sub{ margin-top:16px; font-size:18.5px; color:rgba(255,255,255,.76); max-width:640px; }
+  .jump{ margin-top:32px; display:flex; gap:10px; flex-wrap:wrap; }
+  .jump a{ font-family:var(--ft); font-size:14px; padding:12px 20px; border-radius:10px;
+    text-decoration:none; color:#fff; background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.18); }
+  .jump a.hot{ background:var(--lime); color:#16210B; border-color:var(--lime); font-weight:600; }
 
-  .actions{ margin-top:28px; display:flex; gap:12px; flex-wrap:wrap; }
-  .btn{ display:inline-flex; align-items:center; gap:10px; border:none; cursor:pointer;
-    font-family:var(--f-d); font-weight:700; font-size:16.5px; padding:15px 26px; border-radius:12px;
-    text-decoration:none; }
-  .btn.pri{ background:var(--green-500); color:#16210B; }
-  .btn.sec{ background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.26); }
+  /* ── secciones ── */
+  section{ padding:64px 0; }
+  section + section{ border-top:1px solid var(--line); }
+  .lead-n{ font-family:var(--ft); font-size:12.5px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--moss); display:flex; align-items:center; gap:11px; }
+  .lead-n::before{ content:""; width:26px; height:2px; background:var(--lime); }
+  h2{ font-family:var(--fd); font-weight:700; font-size:clamp(26px,3.4vw,38px); letter-spacing:-.025em;
+    line-height:1.12; margin-top:14px; }
+  .intro{ margin-top:14px; font-size:18px; color:var(--ink2); max-width:70ch; }
 
-  main{ padding:44px 0 60px; }
-  .secthead{ display:flex; justify-content:space-between; align-items:flex-end; gap:16px;
-    flex-wrap:wrap; margin-bottom:8px; }
-  h2{ font-family:var(--f-d); font-weight:700; font-size:26px; letter-spacing:-.02em; }
-  .hint{ font-size:15.5px; color:var(--ink-3); max-width:620px; margin-top:6px; }
+  /* ── N1 · recorrido ── */
+  .steps{ margin-top:38px; display:grid; grid-template-columns:repeat(auto-fill,minmax(268px,1fr)); gap:22px; }
+  .shot{ background:var(--card); border:1px solid var(--line); border-radius:15px; overflow:hidden;
+    box-shadow:0 6px 18px rgba(30,45,18,.06); display:flex; flex-direction:column; }
+  .shot .im{ position:relative; aspect-ratio:3/2; background:#DED8CB; cursor:zoom-in; overflow:hidden; }
+  .shot .im img{ width:100%; height:100%; object-fit:cover; transition:transform .35s ease; }
+  .shot .im:hover img{ transform:scale(1.035); }
+  .shot .n{ position:absolute; top:0; left:0; font-family:var(--ft); font-weight:700; font-size:13px;
+    background:var(--dark); color:var(--lime); padding:7px 13px; border-radius:0 0 11px 0; letter-spacing:.05em; }
+  .shot .body{ padding:15px 17px 17px; display:flex; flex-direction:column; gap:5px; flex:1; }
+  .shot .ang{ font-family:var(--fd); font-weight:650; font-size:18px; }
+  .shot .why{ font-size:14.5px; color:var(--ink3); line-height:1.5; }
+  .shot .fn{ margin-top:auto; padding-top:11px; font-family:var(--ft); font-size:11.5px; color:var(--ink4);
+    word-break:break-all; border-top:1px dashed var(--line2); }
 
-  .filters{ margin:24px 0 22px; display:flex; gap:9px; flex-wrap:wrap; }
-  .chip{ font-family:var(--f-t); font-size:13.5px; padding:9px 16px; border-radius:9px; cursor:pointer;
-    background:var(--card); border:1px solid var(--border); color:var(--ink-2); }
-  .chip[aria-pressed="true"]{ background:var(--green-700); border-color:var(--green-700); color:#fff; }
+  .callout{ margin-top:34px; background:#E7F2FA; border:1px solid #CDE3F0; border-left:4px solid var(--blue);
+    border-radius:13px; padding:24px 28px; }
+  .callout b{ color:var(--ink); }
+  .callout p{ font-size:16.5px; color:var(--ink2); }
 
-  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(272px,1fr)); gap:20px; }
-  .item{ background:var(--card); border:1px solid var(--border); border-radius:15px; overflow:hidden;
-    box-shadow:0 6px 18px rgba(36,54,20,.06); display:flex; flex-direction:column; }
-  .item .ph{ position:relative; aspect-ratio:3/2; background:#DDD8CC; overflow:hidden; }
-  .item .ph img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .item .tag{ position:absolute; top:11px; left:11px; font-family:var(--f-t); font-size:11px;
-    letter-spacing:.09em; text-transform:uppercase; background:rgba(20,23,15,.78); color:#fff;
-    padding:5px 10px; border-radius:7px; }
-  .item .tag.aer{ background:rgba(43,122,166,.9); }
-  .item .meta{ padding:15px 16px 16px; display:flex; flex-direction:column; gap:4px; flex:1; }
-  .item .fn{ font-family:var(--f-t); font-size:12.5px; color:var(--ink-2); word-break:break-all; line-height:1.4; }
-  .item .sz{ font-family:var(--f-t); font-size:12px; color:var(--ink-4); }
-  .item .dl{ margin-top:12px; display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    font-family:var(--f-d); font-weight:600; font-size:14.5px; padding:10px 14px; border-radius:9px;
-    background:#F0F6E6; color:var(--green-700); border:1px solid #D8E8C2; text-decoration:none; }
+  /* ── N2 · organización ── */
+  .orgwrap{ margin-top:38px; display:grid; grid-template-columns:1.05fr .95fr; gap:26px; align-items:start; }
+  .tree{ background:var(--dark); border-radius:16px; padding:26px 26px 28px; overflow-x:auto;
+    box-shadow:0 12px 30px rgba(20,24,16,.2); }
+  .tree .tt{ font-family:var(--ft); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase;
+    color:#7E8A72; margin-bottom:16px; }
+  .tree pre{ font-family:var(--ft); font-size:13.5px; line-height:1.85; color:#D7DECF; white-space:pre; }
+  .tree pre .d{ color:var(--lime); font-weight:600; }
+  .tree pre .f{ color:#9FB08D; }
+  .tree pre .c{ color:#6C7A5F; }
+  .orgnotes{ display:flex; flex-direction:column; gap:15px; }
+  .on{ background:var(--card); border:1px solid var(--line); border-left:4px solid var(--lime);
+    border-radius:13px; padding:20px 22px; }
+  .on b{ display:block; font-family:var(--fd); font-weight:650; font-size:17.5px; }
+  .on span{ display:block; margin-top:6px; font-size:15.5px; color:var(--ink2); line-height:1.55; }
+  .on.b2{ border-left-color:var(--blue); }
+  .on.b3{ border-left-color:var(--clay); }
 
-  .note{ margin-top:38px; background:#E4F1FA; border:1px solid #CBE2F1; border-left:4px solid var(--blue-700);
-    border-radius:12px; padding:22px 26px; }
-  .note b{ color:var(--ink); }
-  .note p{ font-size:16px; color:var(--ink-2); }
-  .note p + p{ margin-top:9px; }
+  .naming{ margin-top:26px; background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:24px 28px; }
+  .naming .nl{ font-family:var(--ft); font-size:12px; letter-spacing:.15em; text-transform:uppercase; color:var(--moss); }
+  .naming .code{ margin-top:14px; font-family:var(--ft); font-size:clamp(13px,1.9vw,17px); color:var(--ink);
+    background:#F0F5E7; border:1px solid #DCE9C9; border-radius:9px; padding:15px 18px; overflow-x:auto; white-space:nowrap; }
+  .naming .parts{ margin-top:16px; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .naming .pp{ font-size:14.5px; color:var(--ink2); }
+  .naming .pp b{ display:block; font-family:var(--ft); font-size:12px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--moss); margin-bottom:3px; }
 
-  footer{ background:#14170F; color:rgba(255,255,255,.62); padding:36px 0; font-size:15px; }
-  footer .fw{ display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; align-items:center; }
-  footer a{ color:var(--green-200); text-decoration:none; }
-  footer .fb{ font-family:var(--f-d); font-weight:700; color:#fff; font-size:16.5px; }
+  /* ── N3 · variedad ── */
+  .filters{ margin-top:30px; display:flex; gap:9px; flex-wrap:wrap; }
+  .chip{ font-family:var(--ft); font-size:13.5px; padding:10px 17px; border-radius:9px; cursor:pointer;
+    background:var(--card); border:1px solid var(--line2); color:var(--ink2); transition:all .15s; }
+  .chip[aria-pressed="true"]{ background:var(--moss); border-color:var(--moss); color:#fff; }
+  .vgrid{ margin-top:24px; display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+  .vc{ background:var(--card); border:1px solid var(--line); border-radius:15px; overflow:hidden;
+    box-shadow:0 6px 18px rgba(30,45,18,.06); }
+  .vc .im{ aspect-ratio:16/10; background:#DED8CB; cursor:zoom-in; overflow:hidden; }
+  .vc .im img{ width:100%; height:100%; object-fit:cover; }
+  .vc .body{ padding:16px 18px 18px; }
+  .vc .tagline{ font-family:var(--ft); font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--moss); }
+  .vc h3{ font-family:var(--fd); font-weight:650; font-size:19px; margin-top:6px; }
+  .vc p{ margin-top:6px; font-size:15px; color:var(--ink3); line-height:1.5; }
 
-  /* visor */
-  dialog{ border:none; padding:0; background:transparent; max-width:96vw; max-height:96vh; }
-  dialog::backdrop{ background:rgba(12,14,9,.9); }
-  dialog img{ max-width:96vw; max-height:88vh; display:block; border-radius:10px; }
-  dialog .cap{ margin-top:10px; font-family:var(--f-t); font-size:13px; color:#DDD; text-align:center; }
+  /* ── cierre ── */
+  .close{ background:var(--dark); color:#EAEFE2; border-radius:18px; padding:40px 44px; margin-top:16px;
+    display:flex; justify-content:space-between; gap:30px; align-items:center; flex-wrap:wrap; }
+  .close h3{ font-family:var(--fd); font-weight:700; font-size:26px; color:#fff; letter-spacing:-.015em; }
+  .close p{ margin-top:10px; font-size:16.5px; color:#A9B59C; max-width:52ch; }
+  .close a{ display:inline-flex; align-items:center; gap:10px; background:var(--lime); color:#16210B;
+    font-family:var(--fd); font-weight:700; font-size:17.5px; padding:16px 30px; border-radius:12px;
+    text-decoration:none; white-space:nowrap; }
 
-  @media (max-width:640px){
-    header{ padding:32px 0 30px; }
-    .grid{ grid-template-columns:1fr 1fr; gap:13px; }
-    .item .meta{ padding:12px; }
-    .item .fn{ font-size:11px; }
-    .item .dl{ font-size:13.5px; padding:9px 10px; }
+  footer{ background:#101309; color:rgba(255,255,255,.6); padding:38px 0; font-size:15px; margin-top:64px; }
+  footer .fw{ display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  footer a{ color:var(--pale); text-decoration:none; }
+  footer .fb{ font-family:var(--fd); font-weight:700; color:#fff; font-size:17px; }
+
+  dialog{ border:none; padding:0; background:transparent; max-width:97vw; max-height:97vh; }
+  dialog::backdrop{ background:rgba(10,12,8,.93); }
+  dialog img{ max-width:97vw; max-height:87vh; border-radius:10px; }
+  dialog .cap{ margin-top:11px; font-family:var(--ft); font-size:13px; color:#CFD6C6; text-align:center; }
+
+  @media (max-width:900px){ .orgwrap{ grid-template-columns:1fr; } }
+  @media (max-width:620px){
+    section{ padding:44px 0; }
+    .steps{ grid-template-columns:1fr 1fr; gap:13px; }
+    .shot .body{ padding:11px 12px 13px; }
+    .shot .ang{ font-size:15.5px; }
+    .shot .why{ display:none; }
+    .shot .fn{ font-size:10px; }
+    .vgrid{ grid-template-columns:1fr; }
+    .close{ padding:28px 24px; }
+    .tree pre{ font-size:11.5px; }
   }
 </style>
 </head>
 <body>
 
-<div class="demobar">
-  <b>MUESTRA</b> · Así se ve la página de entrega que recibe cada agencia con el paquete Integral. Contenido de ejemplo tomado de un trabajo real.
-</div>
+<div class="demobar"><b>MUESTRA</b> · Ejemplo de entrega para Zapata Camiones. Las fotografías son trabajo real hecho para Zapata Querétaro.</div>
 
 <header>
   <div class="wrap">
-    <div class="top">
-      <div class="brand">Drone Mapping MX · Entrega de material</div>
-      <div class="date">Sesión del 4 de septiembre de 2026</div>
+    <div class="hrow">
+      <div class="brandmark"><i></i> Drone Mapping MX</div>
+      <div class="hmeta">Propuesta · 8 agencias · septiembre 2026</div>
     </div>
-    <h1>Zapata Camiones<br/>Agencia Querétaro</h1>
-    <p class="sub">Todo el material de la jornada, nombrado unidad por unidad y disponible para
-      descarga directa. Sin ligas que caducan.</p>
-
-    <div class="stats">
-      <div class="st"><div class="v">148</div><div class="k">Fotografías</div></div>
-      <div class="st"><div class="v">36</div><div class="k">Clips de video</div></div>
-      <div class="st"><div class="v">12</div><div class="k">Unidades cubiertas</div></div>
-      <div class="st"><div class="v">12 meses</div><div class="k">Respaldo garantizado</div></div>
-    </div>
-
-    <div class="actions">
-      <a class="btn pri" href="#galeria">Ver el material</a>
-      <a class="btn sec" href="https://wa.me/527757602869" target="_blank" rel="noopener">Escribir a Drone Mapping</a>
+    <h1>Cómo se cubre y cómo se entrega</h1>
+    <p class="sub">Cada unidad se cubre con el mismo recorrido de tomas en las ocho agencias,
+      y el material llega organizado unidad por unidad. Esto es cómo se ve.</p>
+    <div class="jump">
+      <a class="hot" href="#recorrido">1 · El recorrido de tomas</a>
+      <a href="#organizacion">2 · Cómo se organiza</a>
+      <a href="#cobertura">3 · Rango de cobertura</a>
     </div>
   </div>
 </header>
 
-<main class="wrap" id="galeria">
-  <div class="secthead">
-    <div>
-      <h2>Material de la jornada</h2>
-      <p class="hint">Cada archivo lleva el nombre de la agencia, la fecha, el número de unidad y el tipo de toma.
-        Su equipo sabe qué es cada cosa sin abrirla.</p>
+<!-- ══ NIVEL 1 ══ -->
+<section id="recorrido">
+  <div class="wrap">
+    <div class="lead-n">Nivel 1 · La unidad</div>
+    <h2>Ocho tomas por unidad, siempre las mismas</h2>
+    <p class="intro">Ninguna unidad se cubre "a ojo". Se sigue el mismo recorrido en cada camión y en cada
+      agencia, para que el catálogo completo se vea como una sola marca. Este es el recorrido aplicado a
+      un tractocamión en Zapata Querétaro.</p>
+
+    <div class="steps" id="steps"></div>
+
+    <div class="callout">
+      <p><b>Por qué importa que sea siempre igual.</b> Cuando cada agencia contrata por su cuenta, una manda
+      fotos de frente, otra de perfil y otra con el celular. Al juntarlas no hay catálogo, hay un montón de
+      fotos. Con un recorrido fijo, cualquier unidad de cualquier sede se puede publicar junto a otra sin
+      que se note la diferencia.</p>
     </div>
   </div>
+</section>
 
-  <div class="filters" id="filters">
-    <button class="chip" aria-pressed="true" data-f="all">Todo</button>
-    <button class="chip" aria-pressed="false" data-f="tierra">Cámara en tierra</button>
-    <button class="chip" aria-pressed="false" data-f="aerea">Tomas aéreas</button>
-    <button class="chip" aria-pressed="false" data-f="detalle">Detalles</button>
+<!-- ══ NIVEL 2 ══ -->
+<section id="organizacion">
+  <div class="wrap">
+    <div class="lead-n">Nivel 2 · La entrega</div>
+    <h2>Cómo llega el material a su equipo</h2>
+    <p class="intro">El volumen de una jornada es grande. Si llega en un solo montón, alguien de su equipo
+      pierde días averiguando qué archivo es de qué camión. Por eso se entrega ya separado y nombrado.</p>
+
+    <div class="orgwrap">
+      <div class="tree">
+        <div class="tt">Estructura de la carpeta de cada agencia</div>
+<pre><span class="d">ZAPATA_QUERETARO_2026-09-04/</span>
+├── <span class="d">01_UNIDADES/</span>
+│   ├── <span class="d">U-216/</span>
+│   │   ├── <span class="f">ZQRO_U216_01-FRONTAL.jpg</span>
+│   │   ├── <span class="f">ZQRO_U216_02-3-4-FRONTAL.jpg</span>
+│   │   ├── <span class="f">ZQRO_U216_03-PERFIL.jpg</span>
+│   │   ├── <span class="f">ZQRO_U216_04-3-4-TRASERO.jpg</span>
+│   │   ├── <span class="f">ZQRO_U216_05-TRASERA.jpg</span>
+│   │   ├── <span class="f">ZQRO_U216_06-DETALLE.jpg</span>
+│   │   ├── <span class="f">ZQRO_U216_07-INTERIOR.jpg</span>
+│   │   └── <span class="f">ZQRO_U216_VIDEO-ORBITA.mp4</span>
+│   ├── <span class="d">U-219/</span>   <span class="c">(mismo set)</span>
+│   ├── <span class="d">U-222/</span>   <span class="c">(mismo set)</span>
+│   └── <span class="d">U-223/</span>   <span class="c">(mismo set)</span>
+├── <span class="d">02_AEREAS/</span>
+│   ├── <span class="f">ZQRO_AEREA_PATIO-01.jpg</span>
+│   └── <span class="f">ZQRO_AEREA_ORBITA.mp4</span>
+├── <span class="d">03_CONJUNTO/</span>  <span class="c">(flota completa)</span>
+├── <span class="d">04_AGENCIA/</span>   <span class="c">(fachada e instalaciones)</span>
+└── <span class="d">05_ORIGINALES/</span> <span class="c">(archivo íntegro)</span>
+</pre>
+      </div>
+
+      <div class="orgnotes">
+        <div class="on">
+          <b>Separado por unidad</b>
+          <span>Una carpeta por camión. Para publicar una unidad concreta, se abre su carpeta y ahí está todo lo suyo.</span>
+        </div>
+        <div class="on b2">
+          <b>Aéreas y conjunto aparte</b>
+          <span>Las tomas de patio y flota completa no se mezclan con las de unidad: sirven para otra cosa y se usan en otro momento.</span>
+        </div>
+        <div class="on b3">
+          <b>El archivo completo, incluido</b>
+          <span>Nada se descarta. Lo que no entró en la selección queda en <em>05_ORIGINALES</em> por si su equipo lo necesita después.</span>
+        </div>
+        <div class="on">
+          <b>La misma estructura en las 8 agencias</b>
+          <span>Quien aprenda a moverse en la carpeta de una sede, sabe moverse en las ocho.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="naming">
+      <div class="nl">Cómo se lee un nombre de archivo</div>
+      <div class="code">ZQRO_U216_03-PERFIL.jpg</div>
+      <div class="parts">
+        <div class="pp"><b>ZQRO</b>Agencia (Querétaro)</div>
+        <div class="pp"><b>U216</b>Número de unidad</div>
+        <div class="pp"><b>03</b>Paso del recorrido</div>
+        <div class="pp"><b>PERFIL</b>Tipo de toma</div>
+      </div>
+    </div>
   </div>
+</section>
 
-  <div class="grid" id="grid"></div>
+<!-- ══ NIVEL 3 ══ -->
+<section id="cobertura">
+  <div class="wrap">
+    <div class="lead-n">Nivel 3 · El rango</div>
+    <h2>No solo tractocamiones</h2>
+    <p class="intro">El mismo criterio se aplica a todo lo que haya en piso. Estas son coberturas reales
+      hechas para Zapata Querétaro, con distintos tipos de unidad y distintos clientes finales.</p>
 
-  <div class="note">
-    <p><b>Esto es una muestra.</b> En la entrega real, cada una de las 8 agencias recibe su propia página
-      con el material de su jornada, y solo el suyo.</p>
-    <p>El material completo de la sesión, incluidos los archivos originales sin comprimir, se entrega
-      además en una carpeta de Google Drive con acceso permanente.</p>
+    <div class="filters" id="filters">
+      <button class="chip" aria-pressed="true" data-f="all">Todo</button>
+      <button class="chip" aria-pressed="false" data-f="carga">Carga</button>
+      <button class="chip" aria-pressed="false" data-f="pasaje">Pasaje</button>
+      <button class="chip" aria-pressed="false" data-f="otro">Interiores y eventos</button>
+    </div>
+
+    <div class="vgrid" id="vgrid"></div>
+
+    <div class="close">
+      <div>
+        <h3>Esto es una muestra</h3>
+        <p>En la entrega real, cada una de las ocho agencias recibe su propia carpeta y su propia página,
+          con el material de su jornada y solo el suyo.</p>
+      </div>
+      <a href="https://wa.me/527757602869" target="_blank" rel="noopener">Hablar con Drone Mapping</a>
+    </div>
   </div>
-</main>
+</section>
 
 <footer>
   <div class="wrap fw">
     <div>
       <div class="fb">Drone Mapping MX</div>
-      <div style="margin-top:5px;">Foto y video · Mapeo aéreo · Tulancingo, Hidalgo</div>
+      <div style="margin-top:6px;">Foto y video · Mapeo aéreo · Tulancingo, Hidalgo</div>
     </div>
     <div style="text-align:right;">
       <div><a href="https://wa.me/527757602869" target="_blank" rel="noopener">WhatsApp 775 760 2869</a></div>
-      <div style="margin-top:5px;"><a href="mailto:dronemappingmx@gmail.com">dronemappingmx@gmail.com</a></div>
+      <div style="margin-top:6px;"><a href="mailto:dronemappingmx@gmail.com">dronemappingmx@gmail.com</a></div>
     </div>
   </div>
 </footer>
 
 <dialog id="viewer">
-  <form method="dialog" style="margin:0;"><button style="all:unset;cursor:pointer;display:block;">
+  <form method="dialog" style="margin:0;"><button style="all:unset;cursor:zoom-out;display:block;">
     <img id="vimg" alt="" /><div class="cap" id="vcap"></div>
   </button></form>
 </dialog>
 
 <script>
-const FILES = [
-  {f:'u01_flota.jpg',    n:'ZAPATA_QRO_2026-09-04_U01_PATIO-FLOTA.jpg', s:'8.4 MB', t:'tierra', l:'Patio · flota'},
-  {f:'u02_cabina.jpg',   n:'ZAPATA_QRO_2026-09-04_U02_3-4-FRONTAL.jpg', s:'7.1 MB', t:'tierra', l:'3/4 frontal'},
-  {f:'u03_frontal.jpg',  n:'ZAPATA_QRO_2026-09-04_U03_FRONTAL.jpg',     s:'6.8 MB', t:'tierra', l:'Frontal'},
-  {f:'u04_perfil.jpg',   n:'ZAPATA_QRO_2026-09-04_U04_PERFIL.jpg',      s:'7.9 MB', t:'tierra', l:'Perfil'},
-  {f:'u05_aerea.jpg',    n:'ZAPATA_QRO_2026-09-04_U05_AEREA-PATIO.jpg', s:'9.2 MB', t:'aerea',  l:'Aérea · patio'},
-  {f:'u06_detalle.jpg',  n:'ZAPATA_QRO_2026-09-04_U06_DETALLE-CABINA.jpg', s:'5.6 MB', t:'detalle', l:'Detalle cabina'},
-  {f:'u07_unidad.jpg',   n:'ZAPATA_QRO_2026-09-04_U07_3-4-FRONTAL.jpg', s:'7.4 MB', t:'tierra', l:'3/4 frontal'},
-  {f:'u08_unidad.jpg',   n:'ZAPATA_QRO_2026-09-04_U08_PERFIL.jpg',      s:'8.0 MB', t:'tierra', l:'Perfil'},
+const RECORRIDO = [
+  {f:'r1_frontal',       a:'Frontal',            w:'La cara de la unidad, centrada y a la altura correcta.', n:'ZQRO_U216_01-FRONTAL.jpg'},
+  {f:'r2_tresq_frontal', a:'Tres cuartos frontal', w:'El ángulo que más vende: muestra frente y costado a la vez.', n:'ZQRO_U216_02-3-4-FRONTAL.jpg'},
+  {f:'r3_perfil',        a:'Perfil',             w:'La unidad completa de lado, para leer proporción y configuración.', n:'ZQRO_U216_03-PERFIL.jpg'},
+  {f:'r4_tresq_trasero', a:'Tres cuartos trasero', w:'Cierra la vuelta y muestra el costado opuesto.', n:'ZQRO_U216_04-3-4-TRASERO.jpg'},
+  {f:'r5_trasera',       a:'Trasera',            w:'Quinta rueda, conexiones y todo lo que el comprador revisa.', n:'ZQRO_U216_05-TRASERA.jpg'},
+  {f:'r6_detalle',       a:'Detalle exterior',   w:'Rotulación, espejos y acabados en primer plano.', n:'ZQRO_U216_06-DETALLE.jpg'},
+  {f:'r7_interior',      a:'Interior de cabina', w:'Volante, tablero y equipamiento: lo que se pregunta siempre.', n:'ZQRO_U216_07-INTERIOR.jpg'},
+  {f:'r8_aerea',         a:'Aérea',              w:'La unidad y el patio desde arriba, con dron.', n:'ZQRO_U216_08-AEREA.jpg'},
 ];
 
-const grid = document.getElementById('grid');
+const VARIEDAD = [
+  {f:'v1_tracto',       t:'carga',  k:'Tractocamión · SOLAQRO', h:'Flota de carga', p:'Freightliner en configuración de arrastre, cubiertos unidad por unidad.'},
+  {f:'v2_tdr',          t:'carga',  k:'Tractocamión · TDR',     h:'Otra imagen de marca', p:'La misma cobertura se adapta a la identidad del cliente final.'},
+  {f:'v3_bus_blanco',   t:'pasaje', k:'Autobús · Transpecial',  h:'Transporte de personal', p:'Perfil completo con la identidad de la agencia detrás.'},
+  {f:'v4_bus_rojo',     t:'pasaje', k:'Autobús · A Colón Nacional', h:'Autotransporte foráneo', p:'Unidades rotuladas, cubiertas con el mismo recorrido.'},
+  {f:'v5_interior_bus', t:'otro',   k:'Interior de pasaje',     h:'Por dentro también', p:'Salón, asientos y terminado: lo que no se ve desde afuera.'},
+  {f:'v6_evento',       t:'otro',   k:'Evento interno',         h:'Activaciones de la agencia', p:'Cobertura de eventos corporativos, también con tomas aéreas.'},
+];
+
 const viewer = document.getElementById('viewer');
 const vimg = document.getElementById('vimg');
 const vcap = document.getElementById('vcap');
+function open_(file, cap){ vimg.src = 'img/' + file + '.jpg'; vcap.textContent = cap; viewer.showModal(); }
 
-function render(filter){
-  grid.innerHTML = '';
-  FILES.filter(x => filter === 'all' || x.t === filter).forEach(x => {
-    const el = document.createElement('div');
-    el.className = 'item';
+const steps = document.getElementById('steps');
+RECORRIDO.forEach((s,i) => {
+  const el = document.createElement('article');
+  el.className = 'shot';
+  el.innerHTML =
+    '<div class="im"><span class="n">' + String(i+1).padStart(2,'0') + '</span>' +
+    '<img loading="lazy" src="img/th_' + s.f + '.jpg" alt="' + s.a + '"></div>' +
+    '<div class="body"><div class="ang">' + s.a + '</div>' +
+    '<div class="why">' + s.w + '</div><div class="fn">' + s.n + '</div></div>';
+  el.querySelector('.im').addEventListener('click', () => open_(s.f, s.n));
+  steps.appendChild(el);
+});
+
+const vgrid = document.getElementById('vgrid');
+function renderV(filter){
+  vgrid.innerHTML = '';
+  VARIEDAD.filter(v => filter === 'all' || v.t === filter).forEach(v => {
+    const el = document.createElement('article');
+    el.className = 'vc';
     el.innerHTML =
-      '<div class="ph"><img loading="lazy" src="img/th_' + x.f + '" alt="' + x.l + '" />' +
-      '<span class="tag' + (x.t === 'aerea' ? ' aer' : '') + '">' + x.l + '</span></div>' +
-      '<div class="meta"><div class="fn">' + x.n + '</div><div class="sz">JPG · ' + x.s + '</div>' +
-      '<a class="dl" href="img/' + x.f + '" download="' + x.n + '">Descargar</a></div>';
-    el.querySelector('.ph').addEventListener('click', () => {
-      vimg.src = 'img/' + x.f; vimg.alt = x.l; vcap.textContent = x.n; viewer.showModal();
-    });
-    grid.appendChild(el);
+      '<div class="im"><img loading="lazy" src="img/th_' + v.f + '.jpg" alt="' + v.h + '"></div>' +
+      '<div class="body"><div class="tagline">' + v.k + '</div><h3>' + v.h + '</h3><p>' + v.p + '</p></div>';
+    el.querySelector('.im').addEventListener('click', () => open_(v.f, v.k));
+    vgrid.appendChild(el);
   });
 }
-
 document.getElementById('filters').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;
   document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
-  render(b.dataset.f);
+  renderV(b.dataset.f);
 });
-
-render('all');
+renderV('all');
 </script>
 
 </body>
