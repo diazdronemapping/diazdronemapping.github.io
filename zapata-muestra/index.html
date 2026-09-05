@@ -1,0 +1,231 @@
+<!doctype html>
+<!--
+  Página de entrega · MUESTRA para la cotización de Zapata Camiones (8 agencias).
+  Demuestra qué recibe cada agencia con el paquete Integral: nomenclatura por unidad,
+  acceso permanente y descarga directa sin ligas que caducan.
+  Las imágenes son trabajo real de Drone Mapping para Zapata Querétaro (ya público en dronemapping.mx).
+  Publicada en presentacion.dronemapping.mx/zapata-muestra/
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Entrega de muestra · Zapata Camiones — Drone Mapping MX</title>
+<meta name="description" content="Ejemplo de la página de entrega que recibe cada agencia con el paquete Integral." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Work+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-500:#7BC142; --green-600:#689D36; --green-700:#527A2A; --green-200:#C5E4A0;
+    --blue-700:#2B7AA6;
+    --clay:#C96F4C;
+    --ink:#14170F; --ink-2:#3A3F33; --ink-3:#6B7062; --ink-4:#9AA08F;
+    --bg:#F3EFE6; --card:#FFFFFF; --border:#E2DCCE;
+    --f-d:'Outfit',system-ui,sans-serif; --f-b:'Work Sans',system-ui,sans-serif; --f-t:'Space Grotesk',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{ font-family:var(--f-b); background:var(--bg); color:var(--ink); line-height:1.55;
+    -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 24px; }
+
+  /* barra de muestra */
+  .demobar{ background:var(--clay); color:#fff; text-align:center; padding:11px 24px;
+    font-family:var(--f-t); font-size:13.5px; letter-spacing:.06em; }
+  .demobar b{ font-weight:700; }
+
+  header{ background:linear-gradient(150deg,#16372A,#28523C); color:#fff; padding:44px 0 40px; }
+  header .top{ display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; }
+  header .brand{ font-family:var(--f-d); font-weight:700; font-size:17px; letter-spacing:.02em;
+    color:rgba(255,255,255,.82); }
+  header .date{ font-family:var(--f-t); font-size:13.5px; color:rgba(255,255,255,.62); }
+  header h1{ font-family:var(--f-d); font-weight:800; font-size:clamp(30px,5vw,46px); line-height:1.08;
+    letter-spacing:-.02em; margin-top:26px; }
+  header .sub{ margin-top:12px; font-size:17.5px; color:rgba(255,255,255,.78); max-width:620px; }
+  header .stats{ margin-top:30px; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; }
+  header .st{ background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16);
+    border-radius:13px; padding:16px 18px; }
+  header .st .v{ font-family:var(--f-t); font-weight:700; font-size:26px; color:var(--green-200); line-height:1; }
+  header .st .k{ margin-top:7px; font-family:var(--f-t); font-size:11.5px; letter-spacing:.12em;
+    text-transform:uppercase; color:rgba(255,255,255,.6); }
+
+  .actions{ margin-top:28px; display:flex; gap:12px; flex-wrap:wrap; }
+  .btn{ display:inline-flex; align-items:center; gap:10px; border:none; cursor:pointer;
+    font-family:var(--f-d); font-weight:700; font-size:16.5px; padding:15px 26px; border-radius:12px;
+    text-decoration:none; }
+  .btn.pri{ background:var(--green-500); color:#16210B; }
+  .btn.sec{ background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.26); }
+
+  main{ padding:44px 0 60px; }
+  .secthead{ display:flex; justify-content:space-between; align-items:flex-end; gap:16px;
+    flex-wrap:wrap; margin-bottom:8px; }
+  h2{ font-family:var(--f-d); font-weight:700; font-size:26px; letter-spacing:-.02em; }
+  .hint{ font-size:15.5px; color:var(--ink-3); max-width:620px; margin-top:6px; }
+
+  .filters{ margin:24px 0 22px; display:flex; gap:9px; flex-wrap:wrap; }
+  .chip{ font-family:var(--f-t); font-size:13.5px; padding:9px 16px; border-radius:9px; cursor:pointer;
+    background:var(--card); border:1px solid var(--border); color:var(--ink-2); }
+  .chip[aria-pressed="true"]{ background:var(--green-700); border-color:var(--green-700); color:#fff; }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(272px,1fr)); gap:20px; }
+  .item{ background:var(--card); border:1px solid var(--border); border-radius:15px; overflow:hidden;
+    box-shadow:0 6px 18px rgba(36,54,20,.06); display:flex; flex-direction:column; }
+  .item .ph{ position:relative; aspect-ratio:3/2; background:#DDD8CC; overflow:hidden; }
+  .item .ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .item .tag{ position:absolute; top:11px; left:11px; font-family:var(--f-t); font-size:11px;
+    letter-spacing:.09em; text-transform:uppercase; background:rgba(20,23,15,.78); color:#fff;
+    padding:5px 10px; border-radius:7px; }
+  .item .tag.aer{ background:rgba(43,122,166,.9); }
+  .item .meta{ padding:15px 16px 16px; display:flex; flex-direction:column; gap:4px; flex:1; }
+  .item .fn{ font-family:var(--f-t); font-size:12.5px; color:var(--ink-2); word-break:break-all; line-height:1.4; }
+  .item .sz{ font-family:var(--f-t); font-size:12px; color:var(--ink-4); }
+  .item .dl{ margin-top:12px; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    font-family:var(--f-d); font-weight:600; font-size:14.5px; padding:10px 14px; border-radius:9px;
+    background:#F0F6E6; color:var(--green-700); border:1px solid #D8E8C2; text-decoration:none; }
+
+  .note{ margin-top:38px; background:#E4F1FA; border:1px solid #CBE2F1; border-left:4px solid var(--blue-700);
+    border-radius:12px; padding:22px 26px; }
+  .note b{ color:var(--ink); }
+  .note p{ font-size:16px; color:var(--ink-2); }
+  .note p + p{ margin-top:9px; }
+
+  footer{ background:#14170F; color:rgba(255,255,255,.62); padding:36px 0; font-size:15px; }
+  footer .fw{ display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; align-items:center; }
+  footer a{ color:var(--green-200); text-decoration:none; }
+  footer .fb{ font-family:var(--f-d); font-weight:700; color:#fff; font-size:16.5px; }
+
+  /* visor */
+  dialog{ border:none; padding:0; background:transparent; max-width:96vw; max-height:96vh; }
+  dialog::backdrop{ background:rgba(12,14,9,.9); }
+  dialog img{ max-width:96vw; max-height:88vh; display:block; border-radius:10px; }
+  dialog .cap{ margin-top:10px; font-family:var(--f-t); font-size:13px; color:#DDD; text-align:center; }
+
+  @media (max-width:640px){
+    header{ padding:32px 0 30px; }
+    .grid{ grid-template-columns:1fr 1fr; gap:13px; }
+    .item .meta{ padding:12px; }
+    .item .fn{ font-size:11px; }
+    .item .dl{ font-size:13.5px; padding:9px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="demobar">
+  <b>MUESTRA</b> · Así se ve la página de entrega que recibe cada agencia con el paquete Integral. Contenido de ejemplo tomado de un trabajo real.
+</div>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">Drone Mapping MX · Entrega de material</div>
+      <div class="date">Sesión del 4 de septiembre de 2026</div>
+    </div>
+    <h1>Zapata Camiones<br/>Agencia Querétaro</h1>
+    <p class="sub">Todo el material de la jornada, nombrado unidad por unidad y disponible para
+      descarga directa. Sin ligas que caducan.</p>
+
+    <div class="stats">
+      <div class="st"><div class="v">148</div><div class="k">Fotografías</div></div>
+      <div class="st"><div class="v">36</div><div class="k">Clips de video</div></div>
+      <div class="st"><div class="v">12</div><div class="k">Unidades cubiertas</div></div>
+      <div class="st"><div class="v">12 meses</div><div class="k">Respaldo garantizado</div></div>
+    </div>
+
+    <div class="actions">
+      <a class="btn pri" href="#galeria">Ver el material</a>
+      <a class="btn sec" href="https://wa.me/527757602869" target="_blank" rel="noopener">Escribir a Drone Mapping</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="galeria">
+  <div class="secthead">
+    <div>
+      <h2>Material de la jornada</h2>
+      <p class="hint">Cada archivo lleva el nombre de la agencia, la fecha, el número de unidad y el tipo de toma.
+        Su equipo sabe qué es cada cosa sin abrirla.</p>
+    </div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="chip" aria-pressed="true" data-f="all">Todo</button>
+    <button class="chip" aria-pressed="false" data-f="tierra">Cámara en tierra</button>
+    <button class="chip" aria-pressed="false" data-f="aerea">Tomas aéreas</button>
+    <button class="chip" aria-pressed="false" data-f="detalle">Detalles</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="note">
+    <p><b>Esto es una muestra.</b> En la entrega real, cada una de las 8 agencias recibe su propia página
+      con el material de su jornada, y solo el suyo.</p>
+    <p>El material completo de la sesión, incluidos los archivos originales sin comprimir, se entrega
+      además en una carpeta de Google Drive con acceso permanente.</p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap fw">
+    <div>
+      <div class="fb">Drone Mapping MX</div>
+      <div style="margin-top:5px;">Foto y video · Mapeo aéreo · Tulancingo, Hidalgo</div>
+    </div>
+    <div style="text-align:right;">
+      <div><a href="https://wa.me/527757602869" target="_blank" rel="noopener">WhatsApp 775 760 2869</a></div>
+      <div style="margin-top:5px;"><a href="mailto:dronemappingmx@gmail.com">dronemappingmx@gmail.com</a></div>
+    </div>
+  </div>
+</footer>
+
+<dialog id="viewer">
+  <form method="dialog" style="margin:0;"><button style="all:unset;cursor:pointer;display:block;">
+    <img id="vimg" alt="" /><div class="cap" id="vcap"></div>
+  </button></form>
+</dialog>
+
+<script>
+const FILES = [
+  {f:'u01_flota.jpg',    n:'ZAPATA_QRO_2026-09-04_U01_PATIO-FLOTA.jpg', s:'8.4 MB', t:'tierra', l:'Patio · flota'},
+  {f:'u02_cabina.jpg',   n:'ZAPATA_QRO_2026-09-04_U02_3-4-FRONTAL.jpg', s:'7.1 MB', t:'tierra', l:'3/4 frontal'},
+  {f:'u03_frontal.jpg',  n:'ZAPATA_QRO_2026-09-04_U03_FRONTAL.jpg',     s:'6.8 MB', t:'tierra', l:'Frontal'},
+  {f:'u04_perfil.jpg',   n:'ZAPATA_QRO_2026-09-04_U04_PERFIL.jpg',      s:'7.9 MB', t:'tierra', l:'Perfil'},
+  {f:'u05_aerea.jpg',    n:'ZAPATA_QRO_2026-09-04_U05_AEREA-PATIO.jpg', s:'9.2 MB', t:'aerea',  l:'Aérea · patio'},
+  {f:'u06_detalle.jpg',  n:'ZAPATA_QRO_2026-09-04_U06_DETALLE-CABINA.jpg', s:'5.6 MB', t:'detalle', l:'Detalle cabina'},
+  {f:'u07_unidad.jpg',   n:'ZAPATA_QRO_2026-09-04_U07_3-4-FRONTAL.jpg', s:'7.4 MB', t:'tierra', l:'3/4 frontal'},
+  {f:'u08_unidad.jpg',   n:'ZAPATA_QRO_2026-09-04_U08_PERFIL.jpg',      s:'8.0 MB', t:'tierra', l:'Perfil'},
+];
+
+const grid = document.getElementById('grid');
+const viewer = document.getElementById('viewer');
+const vimg = document.getElementById('vimg');
+const vcap = document.getElementById('vcap');
+
+function render(filter){
+  grid.innerHTML = '';
+  FILES.filter(x => filter === 'all' || x.t === filter).forEach(x => {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML =
+      '<div class="ph"><img loading="lazy" src="img/th_' + x.f + '" alt="' + x.l + '" />' +
+      '<span class="tag' + (x.t === 'aerea' ? ' aer' : '') + '">' + x.l + '</span></div>' +
+      '<div class="meta"><div class="fn">' + x.n + '</div><div class="sz">JPG · ' + x.s + '</div>' +
+      '<a class="dl" href="img/' + x.f + '" download="' + x.n + '">Descargar</a></div>';
+    el.querySelector('.ph').addEventListener('click', () => {
+      vimg.src = 'img/' + x.f; vimg.alt = x.l; vcap.textContent = x.n; viewer.showModal();
+    });
+    grid.appendChild(el);
+  });
+}
+
+document.getElementById('filters').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if(!b) return;
+  document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+  render(b.dataset.f);
+});
+
+render('all');
+</script>
+
+</body>
+</html>
