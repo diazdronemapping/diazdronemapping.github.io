@@ -146,16 +146,44 @@
   footer a{ color:var(--pale); text-decoration:none; }
   footer .fb{ font-family:var(--fd); font-weight:700; color:#fff; font-size:17px; }
 
-  /* ── video ── */
-  .vidrow{ margin-top:34px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr); gap:22px; align-items:start; }
-  .vbox{ background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+  /* ── clips de video ── */
+  .vidhead{ margin-top:56px; }
+  .vidhead h3{ font-family:var(--fd); font-weight:700; font-size:clamp(21px,2.5vw,28px);
+    letter-spacing:-.022em; margin-top:13px; }
+  .vidhead p{ margin-top:11px; font-size:17px; color:var(--ink2); max-width:70ch; }
+  .clipgrid{ margin-top:26px; display:grid; grid-template-columns:repeat(auto-fill,minmax(298px,1fr)); gap:20px; }
+  .clip{ background:var(--card); border:1px solid var(--line); border-radius:15px; overflow:hidden;
+    box-shadow:0 6px 18px rgba(30,45,18,.06); display:flex; flex-direction:column; }
+  .clip .vw{ position:relative; aspect-ratio:16/9; background:#0D100A; cursor:zoom-in; }
+  .clip video{ width:100%; height:100%; object-fit:cover; display:block; }
+  .clip .mv{ position:absolute; top:0; left:0; z-index:2; font-family:var(--ft); font-weight:700;
+    font-size:12px; letter-spacing:.06em; background:var(--dark); color:var(--lime);
+    padding:6px 12px; border-radius:0 0 11px 0; }
+  .clip .dur{ position:absolute; right:9px; bottom:9px; z-index:2; font-family:var(--ft); font-size:11.5px;
+    background:rgba(12,15,9,.72); color:#E7EEDD; padding:3px 8px; border-radius:6px; }
+  .clip .body{ padding:15px 17px 17px; display:flex; flex-direction:column; gap:5px; flex:1; }
+  .clip .ang{ font-family:var(--fd); font-weight:650; font-size:18px; }
+  .clip .why{ font-size:14.5px; color:var(--ink3); line-height:1.5; }
+  .clip .fn{ margin-top:auto; padding-top:11px; font-family:var(--ft); font-size:11.5px; color:var(--ink4);
+    word-break:break-all; border-top:1px dashed var(--line2); }
+  .clipnote{ margin-top:18px; font-family:var(--ft); font-size:13.5px; color:var(--ink3); }
+
+  /* ── la pieza editada · aparte ── */
+  .reelbox{ margin-top:46px; background:var(--card); border:1px solid var(--line);
+    border-top:4px solid var(--clay); border-radius:16px; padding:28px 30px;
+    display:grid; grid-template-columns:258px minmax(0,1fr); gap:30px; align-items:center;
     box-shadow:0 8px 22px rgba(30,45,18,.07); }
-  .vbox video{ width:100%; display:block; background:#0D100A; }
-  .vbox .vb{ padding:16px 20px 18px; }
-  .vbox .vk{ font-family:var(--ft); font-size:11.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--moss); }
-  .vbox h3{ font-family:var(--fd); font-weight:650; font-size:19px; margin-top:5px; }
-  .vbox p{ margin-top:6px; font-size:15px; color:var(--ink3); line-height:1.5; }
-  .vbox.tall video{ max-height:640px; object-fit:contain; }
+  .reelbox video{ width:100%; display:block; border-radius:12px; background:#0D100A; }
+  .reelbox .rk{ font-family:var(--ft); font-size:11.5px; letter-spacing:.11em; text-transform:uppercase;
+    color:var(--clay); font-weight:600; }
+  .reelbox h3{ font-family:var(--fd); font-weight:700; font-size:clamp(20px,2.2vw,24px);
+    margin-top:7px; letter-spacing:-.018em; }
+  .reelbox p{ margin-top:10px; font-size:16px; color:var(--ink2); line-height:1.55; }
+  .reelbox .note{ margin-top:16px; background:#FAF0EA; border:1px solid #EFD8CB; border-radius:11px;
+    padding:14px 18px; font-size:15px; color:var(--ink2); line-height:1.5; }
+  .reelbox .note b{ color:var(--clay); }
+  @media (max-width:760px){ .reelbox{ grid-template-columns:1fr; padding:22px 20px; }
+    .reelbox video{ max-width:248px; margin:0 auto; } }
 
   /* ── interiores destacados ── */
   .intro-int{ margin-top:44px; }
@@ -167,7 +195,6 @@
   .ic .cp{ padding:13px 15px 15px; }
   .ic .cp b{ font-family:var(--fd); font-weight:650; font-size:16.5px; display:block; }
   .ic .cp span{ display:block; margin-top:4px; font-size:14.5px; color:var(--ink3); line-height:1.45; }
-  @media (max-width:900px){ .vidrow{ grid-template-columns:1fr; } }
   @media (max-width:620px){ .igrid{ grid-template-columns:1fr 1fr; gap:12px; } .ic .cp span{ display:none; } }
 
   dialog{ border:none; padding:0; background:transparent; max-width:97vw; max-height:97vh; }
@@ -221,26 +248,30 @@
 
     <div class="steps" id="steps"></div>
 
-    <div class="vidrow">
-      <div class="vbox">
-        <video controls preload="none" poster="media/poster_aerea.jpg" playsinline>
-          <source src="media/aerea_tdr.mp4" type="video/mp4">
-        </video>
-        <div class="vb">
-          <div class="vk">Video · toma aérea</div>
-          <h3>La órbita de la unidad, en movimiento</h3>
-          <p>Cada unidad se acompaña de clip de video, no solo fotografía. Este es material real de una entrega en Zapata Querétaro.</p>
-        </div>
-      </div>
-      <div class="vbox tall">
-        <video controls preload="none" poster="media/poster_reel.jpg" playsinline>
-          <source src="media/reel_solaqro.mp4" type="video/mp4">
-        </video>
-        <div class="vb">
-          <div class="vk">Video · pieza terminada</div>
-          <h3>Lo que su equipo puede armar</h3>
-          <p>Ejemplo de lo que se puede montar con el material entregado.</p>
-        </div>
+    <div class="vidhead">
+      <div class="lead-n">En video</div>
+      <h3>Seis movimientos, no seis veces la misma toma</h3>
+      <p>La fotografía fija la unidad; el video la muestra. Cada jornada devuelve estos seis movimientos,
+        ya recortados y listos para usar. Todo lo que sigue es material real de Zapata Querétaro,
+        tal como se entrega: sin edición, sin música y sin rótulos.</p>
+    </div>
+
+    <div class="clipgrid" id="clipgrid"></div>
+    <div class="clipnote">Se reproducen sin sonido y en bucle. Da clic en cualquiera para verlo a pantalla completa.</div>
+
+    <div class="reelbox">
+      <video controls preload="none" playsinline poster="media/poster_reel.jpg">
+        <source src="media/reel_solaqro.mp4" type="video/mp4">
+      </video>
+      <div>
+        <div class="rk">Aparte · no incluido en esta propuesta</div>
+        <h3>Y esto es lo que se puede armar después con ese material</h3>
+        <p>Pieza real montada con clips de una entrega en Zapata Querétaro. Está aquí para que se vea
+          hasta dónde llega el material grabado, no como parte del entregable: lo que se cotiza es la
+          captura y la organización. El montaje es un trabajo distinto.</p>
+        <div class="note"><b>Quién la edita.</b> Con la carpeta entregada, su equipo o su agencia puede
+          montar piezas como esta sin volver a grabar. Si prefieren que la edición corra por nuestra
+          cuenta, se cotiza por separado.</div>
       </div>
     </div>
 
@@ -274,15 +305,19 @@
 │   │   ├── <span class="f">ZQRO_U216_05-TRASERA.jpg</span>
 │   │   ├── <span class="f">ZQRO_U216_06-DETALLE.jpg</span>
 │   │   ├── <span class="f">ZQRO_U216_07-INTERIOR.jpg</span>
-│   │   └── <span class="f">ZQRO_U216_VIDEO-ORBITA.mp4</span>
+│   │   ├── <span class="f">ZQRO_U216_VIDEO-ORBITA.mp4</span>
+│   │   ├── <span class="f">ZQRO_U216_VIDEO-ACERCAMIENTO.mp4</span>
+│   │   └── <span class="f">ZQRO_U216_VIDEO-CENITAL.mp4</span>
 │   ├── <span class="d">U-219/</span>   <span class="c">(mismo set)</span>
 │   ├── <span class="d">U-222/</span>   <span class="c">(mismo set)</span>
 │   └── <span class="d">U-223/</span>   <span class="c">(mismo set)</span>
 ├── <span class="d">02_AEREAS/</span>
 │   ├── <span class="f">ZQRO_AEREA_PATIO-01.jpg</span>
-│   └── <span class="f">ZQRO_AEREA_ORBITA.mp4</span>
+│   └── <span class="f">ZQRO_AEREA_PATIO.mp4</span>
 ├── <span class="d">03_CONJUNTO/</span>  <span class="c">(flota completa)</span>
+│   └── <span class="f">ZQRO_CONJUNTO_BARRIDO.mp4</span>
 ├── <span class="d">04_AGENCIA/</span>   <span class="c">(fachada e instalaciones)</span>
+│   └── <span class="f">ZQRO_AGENCIA_LLEGADA.mp4</span>
 └── <span class="d">05_ORIGINALES/</span> <span class="c">(archivo íntegro)</span>
 </pre>
       </div>
@@ -386,6 +421,27 @@ const RECORRIDO = [
   {f:'r8_aerea',         a:'Aérea',              w:'La unidad y el patio desde arriba, con dron.', n:'ZQRO_U216_08-AEREA.jpg'},
 ];
 
+const CLIPS = [
+  {f:'orbita',       a:'Órbita de la unidad',       d:'8 s',
+   w:'La vuelta completa en una sola toma: frontal, tres cuartos y perfil sin cortar. Un clip que sustituye a cinco fotos cuando se publica.',
+   n:'ZQRO_U216_VIDEO-ORBITA.mp4'},
+  {f:'acercamiento', a:'Acercamiento en vuelo bajo', d:'6 s',
+   w:'Arranca en el detalle de la cabina y abre hasta el perfil completo. Es la toma con la que conviene abrir una publicación.',
+   n:'ZQRO_U216_VIDEO-ACERCAMIENTO.mp4'},
+  {f:'cenital',      a:'Cenital',                    d:'6 s',
+   w:'La unidad desde arriba, con chasis y quinta rueda a la vista. El ángulo que ninguna cámara en tierra puede dar.',
+   n:'ZQRO_U216_VIDEO-CENITAL.mp4'},
+  {f:'inventario',   a:'Barrido de inventario',      d:'8 s',
+   w:'El piso completo en un solo movimiento. Contesta cuánto inventario hay sin necesidad de una lista.',
+   n:'ZQRO_CONJUNTO_BARRIDO.mp4'},
+  {f:'sede',         a:'Llegada a la sede',          d:'8 s',
+   w:'Del bulevar al frente de la agencia, con la marca visible. Sirve como apertura de cualquier pieza de esa sede.',
+   n:'ZQRO_AGENCIA_LLEGADA.mp4'},
+  {f:'patio',        a:'Recorrido de patio',         d:'8 s',
+   w:'Taller, andenes y flota mixta en una pasada. Muestra la operación, no solo el producto.',
+   n:'ZQRO_AEREA_PATIO.mp4'},
+];
+
 const VARIEDAD = [
   {f:'v1_tracto',       t:'carga',  k:'Tractocamión · SOLAQRO', h:'Flota de carga', p:'Freightliner en configuración de arrastre, cubiertos unidad por unidad.'},
   {f:'v2_tdr',          t:'carga',  k:'Tractocamión · TDR',     h:'Otra imagen de marca', p:'La misma cobertura se adapta a la identidad del cliente final.'},
@@ -437,6 +493,41 @@ document.getElementById('filters').addEventListener('click', e => {
   renderV(b.dataset.f);
 });
 renderV('all');
+
+const clipgrid = document.getElementById('clipgrid');
+CLIPS.forEach(c => {
+  const el = document.createElement('article');
+  el.className = 'clip';
+  el.innerHTML =
+    '<div class="vw"><span class="mv">' + c.a.toUpperCase() + '</span>' +
+    '<span class="dur">' + c.d + '</span>' +
+    '<video muted loop playsinline preload="none" poster="media/poster_' + c.f + '.jpg">' +
+    '<source src="media/clip_' + c.f + '.mp4" type="video/mp4"></video></div>' +
+    '<div class="body"><div class="ang">' + c.a + '</div>' +
+    '<div class="why">' + c.w + '</div><div class="fn">' + c.n + '</div></div>';
+  const v = el.querySelector('video');
+  el.querySelector('.vw').addEventListener('click', () => {
+    if (v.requestFullscreen) { v.controls = true; v.requestFullscreen().catch(() => { v.controls = false; }); }
+  });
+  clipgrid.appendChild(el);
+});
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) clipgrid.querySelectorAll('video').forEach(v => v.controls = false);
+});
+
+// Sólo se descarga y reproduce el clip que está a la vista.
+// Con ahorro de datos activado no se autorreproduce: quedan el póster y los controles.
+const saveData = !!(navigator.connection && navigator.connection.saveData);
+if ('IntersectionObserver' in window && !saveData) {
+  const io_ = new IntersectionObserver(es => es.forEach(e => {
+    const v = e.target;
+    if (e.isIntersecting) { const pr = v.play(); if (pr) pr.catch(() => {}); }
+    else v.pause();
+  }), {rootMargin: '120px 0px', threshold: 0.25});
+  clipgrid.querySelectorAll('video').forEach(v => io_.observe(v));
+} else {
+  clipgrid.querySelectorAll('video').forEach(v => { v.controls = true; v.preload = 'none'; });
+}
 
 const igrid = document.getElementById('igrid');
 INTERIORES.forEach(v => {
