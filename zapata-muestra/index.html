@@ -265,7 +265,9 @@
   .ic .cp{ padding:13px 15px 15px; }
   .ic .cp b{ font-family:var(--fd); font-weight:650; font-size:16.5px; display:block; }
   .ic .cp span{ display:block; margin-top:4px; font-size:14.5px; color:var(--ink3); line-height:1.45; }
-  @media (max-width:620px){ .igrid{ grid-template-columns:1fr 1fr; gap:12px; } .ic .cp span{ display:none; } }
+  /* En movil TODAS las piezas van a una columna, como los clips y las aereas: la foto
+     tiene que leerse sin abrir el visor. Ver el bloque @620 del final. */
+  @media (max-width:620px){ .igrid{ grid-template-columns:1fr; gap:16px; } }
 
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{ animation-duration:.01ms!important; transition-duration:.01ms!important; }
@@ -282,12 +284,17 @@
   @media (max-width:900px){ .orgwrap{ grid-template-columns:1fr; } }
   @media (max-width:620px){
     section{ padding:44px 0; }
-    .steps{ grid-template-columns:1fr 1fr; gap:13px; }
-    .shot .body{ padding:11px 12px 13px; }
-    .shot .ang{ font-size:15.5px; }
-    .shot .why{ display:none; }
-    .shot .fn{ font-size:10px; }
+    /* mas ancho util para la foto: el padding del wrap se recorta */
+    .wrap{ padding:0 18px; }
+    /* una columna en todo: la pieza se aprecia sin abrir el visor */
+    .steps{ grid-template-columns:1fr; gap:16px; }
+    .aergrid{ grid-template-columns:1fr; gap:16px; }
+    .clipgrid{ grid-template-columns:1fr; gap:16px; }
     .vgrid{ grid-template-columns:1fr; }
+    .igrid{ grid-template-columns:1fr; gap:16px; }
+    /* las fotos verticales de interior se recortan a 4:3 en escritorio; en movil
+       se les deja mas alto para que el encuadre no quede decapitado */
+    .ic .im{ aspect-ratio:3/2; }
     .close{ padding:28px 24px; }
     .tree pre{ font-size:11.5px; }
   }
