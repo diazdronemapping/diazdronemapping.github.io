@@ -105,6 +105,8 @@
     border-radius:13px; padding:20px 22px; }
   .on b{ display:block; font-family:var(--fd); font-weight:650; font-size:17.5px; }
   .on span{ display:block; margin-top:6px; font-size:15.5px; color:var(--ink2); line-height:1.55; }
+  /* el <b> del titulo es block: un <b> dentro del texto tiene que volver a inline */
+  .on span b{ display:inline; font-family:inherit; font-size:inherit; font-weight:600; color:var(--ink); }
   .on.b2{ border-left-color:var(--blue); }
   .on.b3{ border-left-color:var(--clay); }
 
@@ -353,8 +355,8 @@
       <div class="lead-n">En video</div>
       <h3>Seis movimientos, no seis veces la misma toma</h3>
       <p>La fotografía fija la unidad; el video la muestra. Cada jornada devuelve estos seis movimientos,
-        ya recortados y listos para usar. Todo lo que sigue es material real de Zapata Querétaro,
-        tal como se entrega: sin edición, sin música y sin rótulos.</p>
+        ya recortados y listos para usar. Los de esta página van en bruto y sin sonido, para que se
+        juzgue el encuadre; en la entrega van también con color y sonido trabajados.</p>
     </div>
 
     <div class="vidbar">
@@ -396,7 +398,8 @@
 │   │   ├── <span class="f">ZQRO_U216_07-INTERIOR.jpg</span>
 │   │   ├── <span class="f">ZQRO_U216_VIDEO-ORBITA.mp4</span>
 │   │   ├── <span class="f">ZQRO_U216_VIDEO-ACERCAMIENTO.mp4</span>
-│   │   └── <span class="f">ZQRO_U216_VIDEO-CENITAL.mp4</span>
+│   │   ├── <span class="f">ZQRO_U216_VIDEO-CENITAL.mp4</span>
+│   │   └── <span class="d">ORIGEN/</span>  <span class="c">(los mismos, sin editar)</span>
 │   ├── <span class="d">U-219/</span>   <span class="c">(mismo set)</span>
 │   ├── <span class="d">U-222/</span>   <span class="c">(mismo set)</span>
 │   └── <span class="d">U-223/</span>   <span class="c">(mismo set)</span>
@@ -419,6 +422,12 @@
         <div class="on b2">
           <b>Aéreas y conjunto aparte</b>
           <span>Las tomas de patio y flota completa no se mezclan con las de unidad: sirven para otra cosa y se usan en otro momento.</span>
+        </div>
+        <div class="on b2">
+          <b>Dos versiones de cada toma</b>
+          <span>Los archivos van en su <b>formato de origen</b>, para que su equipo los edite con libertad,
+            y además ya trabajados: color corregido en foto y video, y sonido en los clips. Los ejemplos de
+            esta página están en bruto; la entrega incluye las dos versiones.</span>
         </div>
         <div class="on b3">
           <b>El archivo completo, incluido</b>
@@ -475,11 +484,8 @@
       <div>
         <div class="rk">Aparte · no incluido en esta propuesta</div>
         <h3>Y esto es lo que se puede armar después con ese material</h3>
-        <p>Dos piezas reales montadas con clips de entregas en Zapata Querétaro. La de TDR usa
-          exactamente los seis movimientos del recorrido en video: así se ven cuando alguien los corta,
-          los ordena y les pone música.</p>
-        <p>Están aquí para que se vea hasta dónde llega el material grabado, no como parte del
-          entregable: lo que se cotiza es la captura y la organización. El montaje es un trabajo distinto.</p>
+        <p>Dos piezas montadas con clips de entregas en Zapata Querétaro. Están aquí para que se vea
+          hasta dónde llega el material grabado; el montaje se cotiza aparte.</p>
         <div class="note"><b>Quién las edita.</b> Con la carpeta entregada, su equipo o su agencia puede
           montar piezas como estas sin volver a grabar. Si prefieren que la edición corra por nuestra
           cuenta, se cotiza por separado.</div>
